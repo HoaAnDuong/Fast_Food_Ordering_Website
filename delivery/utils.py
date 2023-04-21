@@ -6,9 +6,8 @@ def create_deliverer_profile(user):
         return user.deliverer_profile
     except:
         user_location = user.profile.location
-        new_location = Location.objects.create(address=user_location.address,country=user_location.country,
+        new_location = Location.objects.create(country=user_location.country,
                                                region=user_location.region,
-                                               subregion_1=user_location.subregion_1,subregion_2=user_location.subregion_2,
                                                 lat = user_location.lat,lng = user_location.lng)
 
 

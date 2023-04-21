@@ -22,29 +22,38 @@ $(document).on('submit','#current-location-form',function(e){
 e.preventDefault();
 $.ajax({
     type:'POST',
-    url:'./current-location',
+    url:'/current-location',
     data:
     {
         current_lat:$("#current_lat").val(),
         current_lng:$("#current_lng").val(),
         csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
-    },
-    success:function(){
-          alert('Saved');
-        }
+    }
     })
 });
-
 async function currentLocationRefresh(){
     while(true){
         navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+
+        $.ajax({
+            type:'POST',
+            url:'/current-location',
+            data:
+            {
+                current_lat:$("#current_lat").val(),
+                current_lng:$("#current_lng").val(),
+                csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(data){
+               let json = $.parseJSON(data);
+               console.log(json);
+            },
+            error: function(data){
+               let json = $.parseJSON(data);
+               console.log(json);
+            }
+        });
         await sleep(10000);
-        //current_location_form.submit()
     }
 };
-
-currentLocationRefresh()
-
-
-
-
+currentLocationRefresh();

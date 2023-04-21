@@ -1,13 +1,10 @@
 from django.shortcuts import render
 from django.db import transaction
 from django.contrib import messages
-
 from .forms import ProfileAvatarForm
 from .utils import *
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
-
 from .models import Profile,Gender,User_Status
-
 from foodapp.utils import avatar_change
 import os
 

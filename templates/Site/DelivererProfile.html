@@ -109,7 +109,7 @@
                             <div>
                                 <input type = "text" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
                             </div>
-                            <div id = "map" style = "width:800px; height:500px;"></div>
+                            <div id = "map" style = "position:absolute; width:80%; height:50%;"></div>
                             {% if error == "location" %}
                             {% for msg in messages %}
                                 <small style="color:red">{{msg}}</small>
@@ -126,9 +126,9 @@
                             <input type = "hidden" name = "method_tag" value = "deliverer-profile" readonly>
                             <div class = "form-group">
                                 <div>
-                                    <label>Lần đăng nhập gần nhất:</label>
+                                    <label>Lần hoạt động gần nhất:</label>
                                     <br>
-                                    <label> {{user.last_login}}</label>
+                                    <label> {{user.last_active}}</label>
                                 </div>
                                 <div>
                                     <label>Trạng thái:</label>
@@ -148,7 +148,7 @@
                         </form>
                         <form>
                             <h3>Vị trí hiện tại</h3>
-                            <div id = "current_location_map" style = "width:800px; height:500px;"></div>
+                            <div id = "current_location_map" style = "position:absolute; width:100%; height:62%;"></div>
                             {% if error == "deliverer_profile" %}
                             {% for msg in messages %}
                                 <small style="color:red">{{msg}}</small>

@@ -5,7 +5,7 @@ from products.models import Product
 from stores.models import Store
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from djmoney.models.fields import MoneyField
-from foodapp.settings import MAX_ORDER_PRODUCTS_COUNT,MAX_DISTANCE
+from foodapp.settings import MAX_ORDER_PRODUCTS_COUNT,MAX_DISTANCE,MAX_NUM_OF_STORES
 from locations.utils import distance
 
 import datetime
@@ -159,6 +159,8 @@ class Order(models.Model):
         self.destination.save()
 
     def validate(self):
+        if len(self.store_list) > MAX_NUM_OF_STORES:
+            raise ValidationError(f"Số cửa hàng được đặt tối đa là {MAX_NUM_OF_STORES}. Bạn đã đặt hàng trên {len(self.store_list)} cửa hàng")
         for i in self.store_list:
             if i == self.customer_store:
                 raise ValidationError(f"Bạn không thể đặt món từ cửa hàng của chính mình")
@@ -174,6 +176,7 @@ class Order(models.Model):
             "Bạn không thể thực hiện thay đổi trên đơn hàng này."
         )
         if not self.expire_check():
+            self.validate()
             self.calculate_total()
 
 

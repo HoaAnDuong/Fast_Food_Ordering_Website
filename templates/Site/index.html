@@ -65,25 +65,10 @@
             <input type = "hidden" name = "method_tag" value = "register" readonly>
             <input type = "hidden" id = "current_lat" name="current_lat" readonly>
             <input type = "hidden" id = "current_lng" name="current_lng" readonly>
-            <input type = "hidden" id = "timestamp" name="timestamp" readonly>
+            <input type = "hidden" id = "timestamp" name="timestamp">
         </form>
         <script>
-            $(document).on('submit','#current-location-form',function(e){
-            e.preventDefault();
-            $.ajax({
-                type:'POST',
-                url:'./current-location',
-                data:
-                {
-                    current_lat:$("#current_lat").val(),
-                    current_lng:$("#current_lng").val(),
-                    csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
-                },
-                success:function(){
-                      alert('Saved');
-                    }
-                })
-            });
+
         </script>
         {% load static %}
         <script type="text/javascript" src="{% static 'js/current-location.js' %}"></script>

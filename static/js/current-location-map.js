@@ -1,4 +1,6 @@
 
+
+
 var current_location_map = L.map('current_location_map').setView([lat.value,lng.value], 15);
 
 //roadmap tilelayer:'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'
@@ -31,15 +33,7 @@ function reverseGeocoderHandler(error,result){
     }
 }
 
-function onLocationFoundHandler(e){
-    var latlng = e.latlng;
-    current_location_marker.setLatLng(latlng)
-    lngLatString = `${Math.round(latlng.lng * 100000) / 100000}, ${Math.round(latlng.lat * 100000) / 100000}`;
-    current_location_marker.bindPopup(`<b>${lngLatString}</b>`);
-//    var esri_reverseGeocoder = L.esri.Geocoding.reverseGeocode({apikey: apiKey}).latlng(latlng);
-//    esri_reverseGeocoder.run(reverseGeocoderHandler);
 
-}
 
 //current_location_map.locate(
 //    {setView:true}
@@ -47,16 +41,37 @@ function onLocationFoundHandler(e){
 //
 //current_location_map.on('locationfound',onLocationFoundHandler);
 
-function successCallback(e){
-    var latlng = L.latLng({lat:e.coords.latitude,
-                            lng:e.coords.longitude});
+//function successCallback(e){
+//    console.log(e);
+//    var latlng = L.latLng({lat:current_lat.value,
+//                            lng:current_lng.value});
+//    current_location_marker.setLatLng(latlng)
+//    lngLatString = `${Math.round(latlng.lng * 100000) / 100000}, ${Math.round(latlng.lat * 100000) / 100000}`;
+//    current_location_marker.bindPopup(`<b>${lngLatString}</b>`);
+//};
+//
+//function errorCallback(error){
+//  console.log(error);
+//};
+//navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+
+function changeCurrentLocationMarker(){
+
+    var latlng = L.latLng({lat:current_lat.value,
+                            lng:current_lng.value});
     current_location_marker.setLatLng(latlng)
     lngLatString = `${Math.round(latlng.lng * 100000) / 100000}, ${Math.round(latlng.lat * 100000) / 100000}`;
     current_location_marker.bindPopup(`<b>${lngLatString}</b>`);
 };
 
-function errorCallback(error){
-  console.log(error);
-};
+var observer = new MutationObserver(function(mutations, observer) {
+    console.log(mutations)
+    $(timestamp).trigger("change");
+});
+observer.observe(timestamp, {
+    attributes: true
+});
 
-navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+changeCurrentLocationMarker();
+
+$(timestamp).change(changeCurrentLocationMarker);
