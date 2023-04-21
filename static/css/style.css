@@ -1,0 +1,112 @@
+html{
+    font-family: Helvetica,Arial
+}
+
+.navbar-default{
+    background-color: #FFD93D;
+}
+.btn-custom{
+    float: right;
+    padding-right:10px;
+}
+
+.product-image{
+    width: 200px;
+    height: 123px;
+}
+
+.product-image-2{
+    width: 300px;
+    height: 185px;
+}
+
+.user-nav{
+    float:right;
+}
+
+
+.avatar{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+.store-avatar{
+    width: 300px;
+    height: 185px;
+}
+
+.product-card{
+    height:300px;
+    padding-right: 10px;
+}
+.register-form{
+    position: absolute;
+    top: 15%;
+    left: 25%;
+    display: flex;
+    justify-content: left;
+    width: 50%;
+    border-style:solid;
+}
+.login-form{
+    position: absolute;
+    top: 15%;
+    left: 25%;
+    display: flex;
+    justify-content: center;
+    border-style:solid;
+}
+
+.form-default{
+    position: absolute;
+    top: 15%;
+    left: 25%;
+    display: flex;
+    justify-content: center;
+}
+
+.current-order-form{
+    position: absolute;
+    right: 1%;
+    width: auto;
+    border-style:solid;
+    horizontal-align:right;
+    display: flex;
+    justify-content: center;
+    padding-bottom: 20px;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.product-detail{
+    position: absolute;
+    left: 25%;
+    width: 1000px;
+    height: auto;
+    border-style:solid;
+    display: flex;
+    justify-content: flex-start;
+    padding-bottom: 20px;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.product-detail .group-body{
+    display: block;
+    justify-content: center;
+    padding-right: 20px;
+}
+
+.order-product{
+    display: block;
+    justify-content: center;
+}
+
+.order-product .order-product-image{
+
+    width: 100px;
+    height: 62px;
+}
+

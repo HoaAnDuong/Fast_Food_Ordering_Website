@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <script src="https://code.jquery.com/jquery-3.5.1.js"
+          integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Food Ordering App</a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li><a href="/">Trang chủ</a></li>
+
+            <li><a href="/product-list/1">Món ăn</a></li>
+            <li><a href="/routing-test">Routing Test</a></li>
+            <li><a href="#">Page 3</a></li>
+        </ul>
+          {% if not user.is_authenticated %}
+          <a href="/login">
+              <button class = "btn btn-custom navbar-btn">Log In</button>
+          </a>
+          {% elif user.is_authenticated %}
+          <div class="dropleft user-nav" style = "margin-left: 30px; margin-top:1px; position:relative;">
+              {% load static %}
+              <button class="btn btn-lg" type="button" data-toggle="dropdown" style = "height:48px; width:48px;">
+                  <img src="{% static 'bars-solid.svg' %}" style="margin-left:-7px;height:30px; width:30px;"></img>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-right">
+                  <li><a href="/profile">Thông tin Cá nhân</a></li>
+                  {% if user.groups.all|length <= 1 %}
+                    <li><a href="/store">Đăng ký Vai trò Chủ cửa hàng</a></li>
+                    <li><a href="/deliverer-profile">Đăng ký Vai trò Người giao hàng</a></li>
+                  {% endif %}
+                  {% if user.profile.is_store_owner %}
+                    <li><a href="/store">Cửa hàng</a></li>
+                  {% endif %}
+                  {% if user.profile.is_deliverer %}
+                    <li><a href="/deliverer-profile">Thông tin Người giao hàng</a></li>
+                  {% endif %}
+                  <li><a href="/current-order">Đơn hàng hiện tại</a></li>
+                  <li><a href="/logout">Đăng xuất</a></li>
+              </ul>
+          </div>
+          <label class = "user-nav name" style = "margin-left:10px; margin-top:7px; position:relative; font-size:25px">{{user.profile.first_name}}</label>
+          <img src="{{ user.profile.avatar.url }}" class = "avatar user-nav">
+          {% endif %}
+      </div>
+    </nav>
+
+    {% if user.is_authenticated %}
+        {% if user.profile.is_deliverer %}
+        <form id = "current-location-form">
+            {% csrf_token %}
+            <input type = "hidden" name = "method_tag" value = "register" readonly>
+            <input type = "hidden" id = "current_lat" name="current_lat" readonly>
+            <input type = "hidden" id = "current_lng" name="current_lng" readonly>
+            <input type = "hidden" id = "timestamp" name="timestamp" readonly>
+        </form>
+        <script>
+            $(document).on('submit','#current-location-form',function(e){
+            e.preventDefault();
+            $.ajax({
+                type:'POST',
+                url:'./current-location',
+                data:
+                {
+                    current_lat:$("#current_lat").val(),
+                    current_lng:$("#current_lng").val(),
+                    csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+                },
+                success:function(){
+                      alert('Saved');
+                    }
+                })
+            });
+        </script>
+        {% load static %}
+        <script type="text/javascript" src="{% static 'js/current-location.js' %}"></script>
+
+        {% endif %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+
+</body>
+</html>

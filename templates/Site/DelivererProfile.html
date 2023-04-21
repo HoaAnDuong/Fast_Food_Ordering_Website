@@ -1,0 +1,213 @@
+{% extends 'Site/index.html' %}
+{% block content %}
+    <div class = "container-fluid">
+        {% if user.is_authenticated %}
+            {% if deliverer_profile %}
+                <ul class="col-md-2 nav nav-pills nav-stacked">
+                    <li class="active"><a data-toggle = "tab" href="#profile">Thông tin Cơ bản</a></li>
+                    <li><a data-toggle = "tab" href="#deliverer-profile">Thông tin Người Giao Hàng</a></li>
+                    <li><a data-toggle = "tab" href="#location">Nơi sống</a></li>
+                </ul>
+                <div class = "col-md-8 tab-content">
+                    <div class = "tab-pane fade in active" id = "profile">
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <h3>Avatar</h3>
+                            <input type = "hidden" name = "method_tag" value = "avatar" readonly>
+                            <div class = "form-group">
+                                <img class = "avatar" src = "{{profile.avatar.url}}" style = "height: 100px; width: 100px;">
+                            </div>
+                            <div>
+                                <input type="file" name="avatar" accept="image/*" id="id_avatar">
+                            </div>
+                            {% if error == "avatar" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">Xác nhận</button>
+                        </form>
+
+                        <form method = "POST" name="profile">
+                            {% csrf_token %}
+                            <h3>Thông tin cơ bản</h3>
+                            <input type = "hidden" name = "method_tag" value = "profile" readonly>
+                            <div class = "form-group">
+                                <label>Trạng thái:</label>
+                                <label>{{profile.status.code}}</label>
+                            </div>
+                            <div class = "form-group">
+                                <label>Tên<br></label>
+                                <input type="text" name = "first_name" value = "{{profile.first_name}}">
+                            </div>
+                            <div class = "form-group">
+                                <label>Họ<br></label>
+                                <input type="text" name = "last_name" value = "{{profile.last_name}}">
+                            </div>
+                            <div class = "form-group">
+                                <label>Giới tính<br></label>
+                                <select name = "gender">
+                                    {% for gender in genders %}
+                                        <option value = {{gender.id}} {% if profile.gender == gender %}selected{% endif %}>{{gender.code}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class = "form-group">
+                                <label>Ngày sinh<br></label>
+                                <input type = "date" name = "birthdate" value = "{{profile_birthdate}}">
+                            </div>
+                            <div class = "form-group">
+                                <label>Số CCCD/CMND<br></label>
+                                <input type = "text" name = "citizen_identity_card" value = "{{profile.citizen_identity_card}}">
+                            </div>
+                            <div class = "form-group">
+                                <label>Số điện thoại<br></label>
+                                <input type = "text" name = "phone_number" value = "{{profile.phone_number}}">
+                            </div>
+                            <div class = "form-group">
+                                <label>Email<br></label>
+                                <input type = "email" name = "email" value = "{{profile.email}}">
+                            </div>
+                            {% if error == "profile" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">Xác nhận</button>
+                        </form>
+                    </div>
+                    <div class = "tab-pane fade" id = "location">
+                        <form method = "POST">
+                            {% csrf_token %}
+                            <input type = "hidden" name = "method_tag" value = "location" readonly>
+                            <div>
+                                <h3>Vị trí:<br></h3>
+                                <label>Vĩ độ</label>
+                                <input type = "text" id="lat" name="lat" value = {{profile.location.lat}} readonly>
+                            </div>
+                            <div>
+                                <label>Kinh độ</label>
+                                <input type = "text" id="lng" name="lng" value = {{profile.location.lng}} readonly>
+                            </div>
+                            <div>
+                                <label>Địa chỉ</label>
+                                <br>
+                                <input type = "text" id="address" name="address" value = "{{profile.location.address}}" style="width: 500px;">
+                            </div>
+
+                            <div>
+                                <input type = "text" id="country" name="country" value = "{{profile.location.country}}" readonly>
+                            </div>
+                            <div>
+                                <input type = "text" id="region" name="region" value = "{{profile.location.region}}" readonly>
+                            </div>
+                            <div>
+                                <input type = "text" id="subregion_1" name="subregion_1" value = "{{profile.location.subregion_1}}" readonly>
+                            </div>
+                            <div>
+                                <input type = "text" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
+                            </div>
+                            <div id = "map" style = "width:800px; height:500px;"></div>
+                            {% if error == "location" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                        </form>
+                    </div>
+                    <div class = "tab-pane fade in active" id = "deliverer-profile">
+                        <form>
+                            {% csrf_token %}
+                            <h3>Thông tin Người Giao Hàng</h3>
+                            <input type = "hidden" name = "method_tag" value = "deliverer-profile" readonly>
+                            <div class = "form-group">
+                                <div>
+                                    <label>Lần đăng nhập gần nhất:</label>
+                                    <br>
+                                    <label> {{user.last_login}}</label>
+                                </div>
+                                <div>
+                                    <label>Trạng thái:</label>
+                                    <br>
+                                    <label>{{deliverer_profile.status.code}}</label>
+                                </div>
+                                <div>
+                                    <label>Có mặt:</label>
+                                    <br>
+                                    <label> {{deliverer_profile.is_active}}</label>
+                                </div>
+                                <div>
+                                    <label>Giấy phép lái xe<br></label>
+                                    <input type = "text" name = "driver_license" value = "{% if deliverer_profile.driver_license %}{{deliverer_profile.driver_license}}{% endif %}">
+                                </div>
+                            </div>
+                        </form>
+                        <form>
+                            <h3>Vị trí hiện tại</h3>
+                            <div id = "current_location_map" style = "width:800px; height:500px;"></div>
+                            {% if error == "deliverer_profile" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+
+                        </form>
+                    </div>
+
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+                <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+                <script src="https://unpkg.com/leaflet-ant-path" type="text/javascript"></script>
+                <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.0/leaflet.textpath.min.js"></script>
+
+                <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
+                <script src="https://unpkg.com/esri-leaflet-vector@4.0.1/dist/esri-leaflet-vector.js"></script>
+
+                <script src="https://unpkg.com/esri-leaflet-geocoder@3.1.4/dist/esri-leaflet-geocoder.js"></script>
+
+                <script src="https://unpkg.com/@esri/arcgis-rest-request@4.0.0/dist/bundled/request.umd.js"></script>
+                <script src="https://unpkg.com/@esri/arcgis-rest-routing@4.0.0/dist/bundled/routing.umd.js"></script>
+                {% load static %}
+                    <script src="{% static 'js/location.js' %}"></script>
+                    <script src="{% static 'js/current-location-map.js' %}"></script>
+                </div>
+            {% else %}
+                <div class = "col-md-6 p-4 text-center form-default">
+                    <form method = "POST">
+                        {% csrf_token %}
+                        <input type = "hidden" name = "method_tag" value = "register" readonly>
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <label>Đăng ký cửa hàng</label>
+                            </div>
+                            <div class = "modal-body text-left">
+                                <h4>Bạn có chắc chắn muốn đăng ký cửa hàng và hoạt động với vai trò Người Giao Hàng?</h4>
+                                <h4>Lưu ý:</h4>
+                                <h5>- Bạn chỉ có thể đăng ký và hoạt động ở 1 trong 2 vai trò: Chủ cửa hàng hoặc Người giao hàng.</h5>
+                                <h5>- Khi nhấn nút Đăng ký, bạn cần phải điền đầy đủ thông tin để Quản trị viên xét duyệt Cửa hàng của bạn.</h5>
+                                <h5>- Việc đăng ký hoạt động với vai trò Người Giao Hàng sẽ không xóa vai trò Khách Hàng của bạn </h5>
+                                <h5>(Bạn có thể xóa vai trò Khách Hàng ở 1 trang khác nếu bạn là Chủ cửa hàng hoặc Người giao hàng)</h5>
+
+                                <button type="submit" class="btn btn-default">Xác nhận</button>
+                                <a href ="/">
+                                    <button type = "button" class = "btn btn-default">Hủy</button>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
+
+        {% else %}
+            <meta http-equiv="refresh" content="1; url='/login'" />
+            <div>
+                <h3>You are not logged in now, so you will be directed to Login Page</h3>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

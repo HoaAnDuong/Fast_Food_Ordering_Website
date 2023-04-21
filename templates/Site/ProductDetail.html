@@ -1,0 +1,138 @@
+{% extends 'Site/index.html' %}
+
+{% block content %}
+
+    <div class = "container-fluid">
+        <div class = "row">
+            <div class = "col-md-4">
+                <div class = "row product-detail">
+                    <div class = "col-md-4 group-body">
+                        <img class = 'product-image-2' src="{{ product.image.url }}">
+                    </div>
+                    <div class = "col-md-8 group-body">
+                        <h2>{{ product.name }}</h2>
+                        <h5>{{ product.store.location.address}}</h5>
+                        {% if product.store.is_open %}
+                            <h4 style="color:green">Mở cửa</h4>
+                        {% endif %}
+                        <h4>{{ product.price }}</h4>
+                        {% if error == "product" %}
+                        {% for msg in messages %}
+                            <small style="color:red">{{msg}}</small>
+                            <br>
+                        {% endfor %}
+                        {% endif %}
+                        <button type="button" class="btn" data-toggle="modal" data-target="#order_product_modal">
+                            {% if not order_product %}
+                                Đặt món
+                            {% else %}
+                                Cập nhật
+                            {% endif %}
+                        </button>
+                        <div id = "order_product_modal" class = "modal fade" role="dialog">
+                            <div class="modal-dialog">
+                                {% if user.is_authenticated %}
+                                    {% if not product.store == user.store %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">
+                                                    {% if not order_product %}
+                                                        Đặt món: {{product.name}}
+                                                    {% else %}
+                                                        Cập nhật: {{product.name}}
+                                                    {% endif %}
+                                                </h4>
+                                        </div>
+                                        <form method = "POST">
+                                                {% csrf_token %}
+                                                <input type = "hidden" name = "method_tag" value = "{% if not order_product %}add_product{% else %}update_product{% endif %}" readonly>
+                                                <div class="modal-body">
+                                                    <div class = "form-group">
+                                                        <label>Số Lượng</label>
+                                                        <br>
+                                                        <input type="number" name = "quantity" value = "" min = "1" max = "15">
+                                                    </div>
+                                                    <div class = "form-group">
+                                                        <label style = "display: flex">Ghi chú</label>
+                                                        <br>
+                                                        <textarea name = "note" style = "width:500px; height:250px" maxlength="255"></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                </div>
+                                            </form>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label>Bạn cần phải đăng nhập để mua hàng</label>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if order_product %}
+                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#delete_product_modal">Xóa món</button>
+                        <div id = "delete_product_modal" class = "modal fade" role="dialog">
+                            <div class="modal-dialog">
+                                {% if user.is_authenticated %}
+                                    {% if not product.store == user.store %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">
+                                                    Xóa món: {{product.name}} - Số lượng: {{order_product.quantity}}
+                                                </h4>
+                                        </div>
+                                        <form method = "POST">
+                                            {% csrf_token %}
+                                                <div class = "modal-body">
+                                                   <input type = "hidden" name = "method_tag" value = "delete_product" readonly>
+
+                                                    <h4>Bạn có chắc chắn muốn xóa {{product.name}} với số lượng {{order_product.quantity}} ra khỏi giỏ hàng?</h4>
+
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                </div>
+                                            </form>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label>Bạn cần phải đăng nhập để mua hàng</label>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

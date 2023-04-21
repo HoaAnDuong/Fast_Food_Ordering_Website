@@ -1,0 +1,153 @@
+{% extends 'Site/index.html' %}
+{% block content %}
+    <div class = "container-fluid">
+        {% if user.is_authenticated %}
+        <ul class="nav nav-tabs">
+          <li class="active"><a href="/profile">Thông tin</a></li>
+          <li><a href="/current-order">Đơn hàng hiện tại</a></li>
+        </ul>
+        <br>
+
+        <ul class="col-md-2 nav nav-pills nav-stacked">
+          <li class="active"><a data-toggle = "tab" href="#profile">Thông tin</a></li>
+          <li><a data-toggle = "tab" href="#location">Vị trí</a></li>
+        </ul>
+
+        <div class = "col-md-8 tab-content">
+            <div class = "tab-pane fade in active" id = "profile">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <h3>Avatar</h3>
+                    <input type = "hidden" name = "method_tag" value = "avatar" readonly>
+                    <div class = "form-group">
+                        <img class = "avatar" src = "{{profile.avatar.url}}" style = "height: 100px; width: 100px;">
+                    </div>
+                    <div>
+                        <input type="file" name="avatar" accept="image/*" id="id_avatar"}>
+                    </div>
+                    {% if error == "avatar" %}
+                    {% for msg in messages %}
+                        <small style="color:red">{{msg}}</small>
+                        <br>
+                    {% endfor %}
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                </form>
+                <form method = "POST" name="profile">
+                    {% csrf_token %}
+                    <h3>Thông tin cơ bản</h3>
+                    <input type = "hidden" name = "method_tag" value = "profile" readonly>
+                    <div class = "form-group">
+                        <h4>Trạng thái:</h4>
+                        <label>{{profile.status.code}}</label>
+                    </div>
+                    <div class = "form-group">
+                        <label>Tên<br></label>
+                        <input type="text" name = "first_name" value = "{{profile.first_name}}">
+                    </div>
+                    <div class = "form-group">
+                        <label>Họ<br></label>
+                        <input type="text" name = "last_name" value = "{{profile.last_name}}">
+                    </div>
+                    <div class = "form-group">
+                        <label>Giới tính<br></label>
+                        <select name = "gender">
+                            {% for gender in genders %}
+                                <option value = {{gender.id}} {% if profile.gender == gender %}selected{% endif %}>{{gender.code}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class = "form-group">
+                        <label>Ngày sinh<br></label>
+                        <input type = "date" name = "birthdate" value = "{{profile_birthdate}}">
+                    </div>
+                    <div class = "form-group">
+                        <label>Số CCCD/CMND<br></label>
+                        <input type = "text" name = "citizen_identity_card" value = "{% if profile.citizen_identity_card %}{{profile.citizen_identity_card}}{% endif %}">
+                    </div>
+                    <div class = "form-group">
+                        <label>Số điện thoại<br></label>
+                        <input type = "text" name = "phone_number" value = "{{profile.phone_number}}">
+                    </div>
+                    <div class = "form-group">
+                        <label>Email<br></label>
+                        <input type = "email" name = "email" value = "{{profile.email}}">
+                    </div>
+                    {% if error == "profile" %}
+                    {% for msg in messages %}
+                        <small style="color:red">{{msg}}</small>
+                        <br>
+                    {% endfor %}
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                </form>
+            </div>
+            <div class = "tab-pane fade" id = "location">
+                <form method = "POST">
+                    {% csrf_token %}
+                    <input type = "hidden" name = "method_tag" value = "location" readonly>
+                    <div>
+                        <h3>Vị trí:<br></h3>
+                        <label>Vĩ độ</label>
+                        <input type = "text" id="lat" name="lat" value = {{profile.location.lat}} readonly>
+                    </div>
+                    <div>
+                        <label>Kinh độ</label>
+                        <input type = "text" id="lng" name="lng" value = {{profile.location.lng}} readonly>
+                    </div>
+                    <div>
+                        <label>Địa chỉ</label>
+                        <br>
+                        <input type = "text" id="address" name="address" value = "{{profile.location.address}}" style="width: 500px;">
+                    </div>
+
+                    <div>
+                        <input type = "text" id="country" name="country" value = "{{profile.location.country}}" readonly>
+                    </div>
+                    <div>
+                        <input type = "text" id="region" name="region" value = "{{profile.location.region}}" readonly>
+                    </div>
+                    <div>
+                        <input type = "text" id="subregion_1" name="subregion_1" value = "{{profile.location.subregion_1}}" readonly>
+                    </div>
+                    <div>
+                        <input type = "text" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
+                    </div>
+                    {% if error == "location" %}
+                    {% for msg in messages %}
+                        <small style="color:red">{{msg}}</small>
+                        <br>
+                    {% endfor %}
+                    {% endif %}
+                    <div id = "map" style = "width:800px; height:500px; float:center;"></div>
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                </form>
+
+            </div>
+
+        </div>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+        <script src="https://unpkg.com/leaflet-ant-path" type="text/javascript"></script>
+        <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.0/leaflet.textpath.min.js"></script>
+
+
+        <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
+        <script src="https://unpkg.com/esri-leaflet-vector@4.0.1/dist/esri-leaflet-vector.js"></script>
+
+        <script src="https://unpkg.com/esri-leaflet-geocoder@3.1.4/dist/esri-leaflet-geocoder.js"></script>
+
+        <script src="https://unpkg.com/@esri/arcgis-rest-request@4.0.0/dist/bundled/request.umd.js"></script>
+        <script src="https://unpkg.com/@esri/arcgis-rest-routing@4.0.0/dist/bundled/routing.umd.js"></script>
+        {% load static %}
+        <script src="{% static 'js/location.js' %}"></script>
+        {% else %}
+        <meta http-equiv="refresh" content="1; url='/login'" />
+        <div class = "col-md-6 p-4 text-center">
+            <h3>You are not logging in now, so you will be directed to Login</h3>
+        </div>
+        {% endif %}
+    </div>
+
+
+{% endblock %}
