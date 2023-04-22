@@ -79,6 +79,7 @@
                         </form>
                     </div>
                     <div class = "tab-pane fade" id = "location">
+
                         <form method = "POST">
                             {% csrf_token %}
                             <input type = "hidden" name = "method_tag" value = "location" readonly>
@@ -94,7 +95,7 @@
                             <div>
                                 <label>Địa chỉ</label>
                                 <br>
-                                <input type = "text" id="address" name="address" value = "{{profile.location.address}}" style="width: 500px;">
+                                <input type = "text" id="address" name="address" value = "{{profile.location.address}}" style="width: 50vw;">
                             </div>
 
                             <div>
@@ -109,14 +110,15 @@
                             <div>
                                 <input type = "text" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
                             </div>
-                            <div id = "map" style = "position:absolute; width:80%; height:50%;"></div>
+                            <div id = "map" style = "height:50vw; width:80vw; "></div>
+
                             {% if error == "location" %}
                             {% for msg in messages %}
                                 <small style="color:red">{{msg}}</small>
                                 <br>
                             {% endfor %}
                             {% endif %}
-                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                            <button type="submit" class="btn btn-primary">Xác nhận</button>
                         </form>
                     </div>
                     <div class = "tab-pane fade in active" id = "deliverer-profile">
@@ -148,14 +150,14 @@
                         </form>
                         <form>
                             <h3>Vị trí hiện tại</h3>
-                            <div id = "current_location_map" style = "position:absolute; width:100%; height:62%;"></div>
+                            <div id = "current_location_map" style = "height:50vw; width:80vw; "></div>
                             {% if error == "deliverer_profile" %}
                             {% for msg in messages %}
                                 <small style="color:red">{{msg}}</small>
                                 <br>
                             {% endfor %}
                             {% endif %}
-                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+
 
                         </form>
                     </div>

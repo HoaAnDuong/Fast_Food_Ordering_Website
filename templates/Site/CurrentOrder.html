@@ -224,7 +224,8 @@
                             <div>
                                 <input type = "hidden" id="subregion_2" name="subregion_2" value = "{{current_order.destination.subregion_2}}" readonly>
                             </div>
-                            <div id = "map" style = "position:absolute; width:80%; height:50%;"></div>
+                            <div id = "map" style = "height:50vw; width:80vw; "></div>
+                            <button type="submit" class="btn btn-primary">Xác nhận</button>
                         </div>
                         {% if error == "location" %}
                         {% for msg in messages %}

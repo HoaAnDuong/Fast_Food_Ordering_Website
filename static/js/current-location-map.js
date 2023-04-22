@@ -71,7 +71,6 @@ var observer = new MutationObserver(function(mutations, observer) {
 observer.observe(timestamp, {
     attributes: true
 });
+$(timestamp).change(changeCurrentLocationMarker);
 
 changeCurrentLocationMarker();
-
-$(timestamp).change(changeCurrentLocationMarker);
