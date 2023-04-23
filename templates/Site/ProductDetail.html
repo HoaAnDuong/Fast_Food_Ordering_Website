@@ -4,12 +4,12 @@
 
     <div class = "container-fluid">
         <div class = "row">
-            <div class = "col-md-4">
+            <div class = "col" style = "width: 30vw">
                 <div class = "row product-detail">
-                    <div class = "col-md-4 group-body">
+                    <div class = "col group-body">
                         <img class = 'product-image-2' src="{{ product.image.url }}">
                     </div>
-                    <div class = "col-md-8 group-body">
+                    <div class = "col group-body" style = "width: 80vw">
                         <h2>{{ product.name }}</h2>
                         <h5>{{ product.store.location.address}}</h5>
                         {% if product.store.is_open %}

@@ -15,6 +15,8 @@ def CurrentOrderView(request):
         ctx["current_order"] = current_order
         if current_order:
             ctx["store_list"] = current_order.store_list
+            ctx["shortest_path"] = current_order.shortest_path()
+            print(ctx["shortest_path"])
         ctx["payment_methods"] = Payment_Method.objects.all()
         if request.method == "POST":
             match request.POST.get("method_tag"):
@@ -39,6 +41,10 @@ def CurrentOrderView(request):
                 case "delete_product":
                     product = Product.objects.get(id=request.POST.get("product_id"))
                     current_order.delete_product(product)
+
+                case "submit_order":
+                    current_order.submit_order()
+
             current_order = request.user.profile.current_order
             ctx["current_order"] = current_order
     else:

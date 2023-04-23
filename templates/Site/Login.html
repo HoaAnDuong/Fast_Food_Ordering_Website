@@ -3,7 +3,7 @@
     <div class = "container-fluid">
         <div class = "row">
             {% if not user.is_authenticated %}
-            <div class = "col-md-6 p-4 text-center login-form">
+            <div class = "col-md-4 p-4 text-center login-form">
                 <form method = "POST">
                     {% csrf_token %}
                     <h3>Đăng nhập</h3>

@@ -60,18 +60,34 @@
 
     {% if user.is_authenticated %}
         {% if user.profile.is_deliverer %}
+
         <form id = "current-location-form">
             {% csrf_token %}
             <input type = "hidden" name = "method_tag" value = "register" readonly>
-            <input type = "hidden" id = "current_lat" name="current_lat" readonly>
-            <input type = "hidden" id = "current_lng" name="current_lng" readonly>
+            <input type = "hidden" id = "current_lat" name="current_lat" value = "{{user.deliverer_profile.current_location.lat}}" readonly>
+            <input type = "hidden" id = "current_lng" name="current_lng" value = "{{user.deliverer_profile.current_location.lng}}" readonly>
             <input type = "hidden" id = "timestamp" name="timestamp">
         </form>
-        <script>
+        <button data-toggle="collapse" data-target="#fake_location_collapse" class = "btn btn-primary">Fake Location</button>
+        <div id="fake_location_collapse" class="collapse panel panel-default" style = "width: 40vw;">
+            <div class="panel-heading" style = "width: 40vw;">Fake Location</div>
+            <div class = "panel-body" id = "fake_location_map"  style = "height: 40vh; width: 40vw;"></div>
+        </div>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+        <script src="https://unpkg.com/leaflet-ant-path" type="text/javascript"></script>
+        <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.0/leaflet.textpath.min.js"></script>
 
-        </script>
+        <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
+        <script src="https://unpkg.com/esri-leaflet-vector@4.0.1/dist/esri-leaflet-vector.js"></script>
+
+        <script src="https://unpkg.com/esri-leaflet-geocoder@3.1.4/dist/esri-leaflet-geocoder.js"></script>
+
+        <script src="https://unpkg.com/@esri/arcgis-rest-request@4.0.0/dist/bundled/request.umd.js"></script>
+        <script src="https://unpkg.com/@esri/arcgis-rest-routing@4.0.0/dist/bundled/routing.umd.js"></script>
         {% load static %}
-        <script type="text/javascript" src="{% static 'js/current-location.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/fake-current-location.js' %}"></script>
+
 
         {% endif %}
     {% endif %}

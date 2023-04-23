@@ -55,8 +55,8 @@ class Store(models.Model):
 		try:
 			now_weekday = today.weekday()
 			now_hour = today.time()
-			today_opening_hour =  self.opening_hours.get(weekday=now_weekday)
-			return self.status == "active" and now_hour >= today_opening_hour.from_hour and now_hour <= today_opening_hour.to_hour
+			today_opening_hour = self.opening_hours.get(weekday=now_weekday)
+			return self.status.code == "active" and now_hour >= today_opening_hour.from_hour and now_hour <= today_opening_hour.to_hour
 		except:
 			return False
 	def distance_to(self,location):

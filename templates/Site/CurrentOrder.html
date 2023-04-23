@@ -11,7 +11,6 @@
 
             <ul class="col-md-2 nav nav-pills nav-stacked">
                 <li class="active"><a data-toggle = "tab" href="#profile">Thông tin Đơn Hàng</a></li>
-
             </ul>
             <div class = "col-md-8 tab-content">
                 <div class = "tab-pane fade in active" id = "profile">
@@ -39,15 +38,70 @@
                             <label>{{current_order.order_status.code}}</label>
                         </div>
                         <div>
+                            <h4>Phí vận chuyển:</h4>
+                            <label>{{current_order.delivery_fee}}</label>
+                        </div>
+                        <div>
+                            <h4>Tổng tiền các món ăn:</h4>
+                            <label>{{current_order.product_total}}</label>
+                        </div>
+                        <div>
                             <h4>Tổng tiền:</h4>
                             <label>{{current_order.total}}</label>
                         </div>
                         <button type="submit" class="btn btn-primary">Cập nhật</button>
                     </form>
+                    <h2>Hành động</h2>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#submit_order_modal">
+                        Đặt đơn hàng
+                    </button>
+                    <div id = "submit_order_modal" class = "modal fade" role="dialog">
+                        <div class="modal-dialog">
+                            {% if user.is_authenticated %}
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title">
+                                            Bạn có chắc chắn muốn đặt đơn hàng này không?
+                                        </h4>
+                                    </div>
+                                    <form method = "POST">
+                                        {% csrf_token %}
+                                        <input type = "hidden" name = "method_tag" value = "submit_order" readonly>
+                                        <h4>Danh sách các món ăn:</h4>
+                                        {% for order_product in current_order.order_products.all %}
+                                        <h5>Tên:{{order_product.product.name}}</h5>
+                                        <h5>Đơn giá:{{order_product.price}}</h5>
+                                        <h5>Số lượng:{{order_product.quantity}}</h5>
+                                        <h5>Tổng:{{order_product.total}}</h5>
+                                        <br>
+                                        {% endfor %}
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label>Bạn cần phải đăng nhập để mua hàng</label>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
 
                     <form method = "POST">
                         <h3>Giỏ hàng({{current_order.total_quantity}}):</h3>
-                        <table class = "table table-hover">
+                        <table class = "table table-hover" style = "width = 80vw;">
                             <thead>
                                 <tr>
                                     <th>Tên món</th>
@@ -63,9 +117,9 @@
                                 <tr>
                                     <td><a href = "/product/{{order_product.product.slug}}"><h5>{{order_product.product.name}}</h5></a></td>
                                     <td><img style = "width:100px; height:62px;" src = "{{order_product.product.image.url}}"></td>
-                                    <td>{{order_product.product.price}}</td>
-                                    <td>{{order_product.quantity}}</td>
                                     <td>{{order_product.price}}</td>
+                                    <td>{{order_product.quantity}}</td>
+                                    <td>{{order_product.total}}</td>
                                     <td>
                                         <button type="button" class="btn" data-toggle="modal" data-target="#order_product_modal_{{forloop.counter0}}">
                                             Cập Nhật
@@ -193,6 +247,13 @@
                             <br>
                         {% endfor %}
                     {% endif %}
+                    {% if shortest_path %}
+                        <input type = "hidden" id="num_points" value = "{{store_list|length}}">
+                        {% for i in shortest_path.path %}
+                            <input type = "hidden" id="point_{{ forloop.counter0 }}_lat" value = {{i.lat}}>
+                            <input type = "hidden" id="point_{{ forloop.counter0 }}_lng" value = {{i.lng}}>
+                        {% endfor %}
+                    {% endif %}
                    <form method = "POST" id = "location">
                        {% csrf_token %}
                         <input type="hidden" name="method_tag" value = "location" readonly>
@@ -224,8 +285,8 @@
                             <div>
                                 <input type = "hidden" id="subregion_2" name="subregion_2" value = "{{current_order.destination.subregion_2}}" readonly>
                             </div>
-                            <div id = "map" style = "height:50vw; width:80vw; "></div>
-                            <button type="submit" class="btn btn-primary">Xác nhận</button>
+                            <div id = "map" style = "height:80vh; width:80vw; "></div>
+                            <button type="submit" class="btn btn-primary">Cập nhật</button>
                         </div>
                         {% if error == "location" %}
                         {% for msg in messages %}
@@ -233,7 +294,6 @@
                             <br>
                         {% endfor %}
                         {% endif %}
-                        <button type="submit" class="btn btn-primary">Cập nhật</button>
                     </form>
                 </div>
                 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
@@ -253,13 +313,28 @@
             </div>
             {% else %}
                 {% if user.profile.is_customer %}
-                <div class = "form-default">
-                    <form method = "POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="method_tag" value = "create_order" readonly>
-                        <button class = "btn" style = "display: flex; justify-content: space-between;">Tạo Đơn Hàng Mới</button>
-                    </form>
-                </div>
+                <div class = "col-md-6 p-4 text-center form-default">
+                <form method = "POST">
+                    {% csrf_token %}
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <label>Tạo đơn hàng mới</label>
+                        </div>
+                        <div class = "modal-body">
+                            <form method = "POST">
+                                {% csrf_token %}
+                                <h4>Bạn có chắc chắn muốn tạo một đơn hàng mới</h4>
+                                <input type="hidden" name="method_tag" value = "create_order" readonly>
+                                <button type = "submit" class = "btn btn-default">Có</button>
+                                <a href ="/">
+                                    <button type = "button" class = "btn btn-default">Không</button>
+                                </a>
+                            </form>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
                 {% else %}
                 <div>
                     <meta http-equiv="refresh" content="1; url='/'">

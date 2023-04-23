@@ -16,8 +16,8 @@ html{
 }
 
 .product-image-2{
-    width: 300px;
-    height: 185px;
+    width: 20vw;
+    height: 12vw;
 }
 
 .user-nav{
@@ -40,8 +40,8 @@ html{
     padding-right: 10px;
 }
 .register-form{
-    position: absolute;
-    top: 15%;
+    position: relative;
+
     left: 25%;
     display: flex;
     justify-content: left;
@@ -50,17 +50,15 @@ html{
 }
 .login-form{
     position: absolute;
-    top: 15%;
-    left: 25%;
+    left: 25vw;
     display: flex;
     justify-content: center;
     border-style:solid;
 }
 
 .form-default{
-    position: absolute;
-    top: 15%;
-    left: 25%;
+    position: relative;
+    left: 20vw;
     display: flex;
     justify-content: center;
 }
@@ -80,9 +78,9 @@ html{
 }
 
 .product-detail{
-    position: absolute;
+    position: relative;
     left: 25%;
-    width: 1000px;
+    width: 80vw;
     height: auto;
     border-style:solid;
     display: flex;
@@ -105,7 +103,6 @@ html{
 }
 
 .order-product .order-product-image{
-
     width: 100px;
     height: 62px;
 }

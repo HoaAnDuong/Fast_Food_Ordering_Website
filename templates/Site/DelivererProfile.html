@@ -110,7 +110,7 @@
                             <div>
                                 <input type = "text" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
                             </div>
-                            <div id = "map" style = "height:50vw; width:80vw; "></div>
+                            <div id = "map" style = "height:80vh; width:80vw; "></div>
 
                             {% if error == "location" %}
                             {% for msg in messages %}
@@ -150,7 +150,7 @@
                         </form>
                         <form>
                             <h3>Vị trí hiện tại</h3>
-                            <div id = "current_location_map" style = "height:50vw; width:80vw; "></div>
+                            <div id = "current_location_map" style = "height:80vh; width:80vw; "></div>
                             {% if error == "deliverer_profile" %}
                             {% for msg in messages %}
                                 <small style="color:red">{{msg}}</small>

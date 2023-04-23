@@ -23,7 +23,7 @@ location_marker.addTo(map)
 
 var locationTab = document.getElementById('location');
 var observer1 = new MutationObserver(function(){
-  map.invalidateSize();
+  location_map.invalidateSize();
 });
 observer1.observe(locationTab, {attributes: true});
 
@@ -34,6 +34,10 @@ location_marker.openPopup();
 const apiKey = "AAPK5a1319c4648247188e709e0176c0a073pqXTy5i1h6UW8b2prBtWB59DSR7OsFx-2yGG0CpcSTeKcf8ZkrkMbg6EYLZ0p3VW";
 
 const authentication = arcgisRest.ApiKeyManager.fromKey(apiKey);
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function reverseGeocoderHandler(error,result){
     if(error){
@@ -59,6 +63,9 @@ function onMapClickHandler(e){
     lng.value = latlng.lng;
     var esri_reverseGeocoder = L.esri.Geocoding.reverseGeocode({apikey: apiKey}).latlng(latlng);
     esri_reverseGeocoder.run(reverseGeocoderHandler);
+    sleep(100)
 }
+
+
 
 map.on("click",onMapClickHandler);

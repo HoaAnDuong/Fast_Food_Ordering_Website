@@ -7,6 +7,8 @@ from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from djmoney.models.fields import MoneyField
 from foodapp.settings import MAX_ORDER_PRODUCTS_COUNT,MAX_DISTANCE,MAX_NUM_OF_STORES
 from locations.utils import distance
+from itertools import permutations
+import sys
 
 import datetime
 
@@ -54,6 +56,9 @@ class Order(models.Model):
     payment_method = models.ForeignKey(Payment_Method, on_delete=models.DO_NOTHING, blank=True, null=True)
     destination = models.ForeignKey(Location,on_delete=models.SET_NULL,null=True)
     total = MoneyField(max_digits=256,decimal_places=2,default_currency='VND',default=0)
+    product_total = MoneyField(max_digits=256,decimal_places=2,default_currency='VND',default=0)
+    delivery_fee = MoneyField(max_digits=256,decimal_places=2,default_currency='VND',default=0)
+    nighttime_fee = MoneyField(max_digits=256,decimal_places=2,default_currency='VND',default=0)
     delivery_status = models.ForeignKey(Delivery_Status,on_delete=models.DO_NOTHING,blank=True,null=True)
     payment_status = models.ForeignKey(Payment_Status,on_delete=models.DO_NOTHING,blank=True,null=True)
     order_status = models.ForeignKey(Order_Status,on_delete=models.DO_NOTHING,blank=True,null=True)
@@ -80,16 +85,43 @@ class Order(models.Model):
             return False
     def calculate_total(self):
         self.total = 0
+        self.product_total = 0
         for i in self.order_products.all():
-            self.total += i.price
+            self.product_total += i.total
+        self.shortest_path()
+        self.total += self.product_total
         self.save()
         return self.total
 
-    def add_product(self,product,quantity,note):
+    def shortest_path(self,start_pos = None):
+        stores = self.store_list
+        end_pos = self.destination
 
+        min_total_length = sys.maxsize
+        min_path = []
+        for stores_list in permutations(stores):
+            total_length = 0
+            path = []
+            if start_pos != None:
+                path.append(start_pos)
+            path+=[item.location for item in stores_list]
+            path.append(end_pos)
+            for i in range(len(path)-1):
+                total_length+=distance(path[i],path[i+1])
+
+            if total_length < min_total_length:
+                min_total_length = total_length
+                min_path = path
+        return {"total_length":min_total_length,"path":min_path}
+
+
+    def add_product(self,product,quantity,note):
+        store_list = self.store_list
+        if product.store not in store_list:
+            if len(store_list) >= MAX_NUM_OF_STORES:
+                raise ValidationError(f"Bạn không thể đặt thêm món từ 1 cửa hàng mới.Số lượng cửa hàng đã vượt quá {MAX_NUM_OF_STORES}.")
         if self.order_status.code != "pending":
             raise ValidationError("Bạn không thể thực hiện thay đổi trên đơn hàng này.")
-
         if product.store == self.customer_store:
             raise ValidationError("Bạn không thể đặt đơn hàng từ shop của chính bạn")
         quantity = int(quantity)
@@ -101,8 +133,8 @@ class Order(models.Model):
         if quantity < 0: raise ValueError("Số lượng không thể nhỏ hơn 0")
 
         if self.total_quantity + quantity <= MAX_ORDER_PRODUCTS_COUNT:
-            self.order_products.create(order = self,product=product,quantity=quantity
-                                    ,price = product.price*quantity,note=note,status = Order_Product_Status.objects.get(code = "pending"))
+            self.order_products.create(order = self,product=product,price = product.price,quantity=quantity,
+                                    total = product.price*quantity,note=note,status = Order_Product_Status.objects.get(code = "pending"))
             self.calculate_total()
             self.logs.create(log = f"{datetime.datetime.now()}: Đã thêm sản phẩm {product.name} với số lượng {quantity}")
         else:
@@ -122,9 +154,10 @@ class Order(models.Model):
         if quantity < 0: raise ValueError("Số lượng không thể nhỏ hơn 0")
         order_product = self.order_products.get(product=product)
         if self.total_quantity - order_product.quantity + quantity <= MAX_ORDER_PRODUCTS_COUNT:
+            order_product.price = product.price
             order_product.quantity = quantity
             order_product.note = note
-            order_product.price = product.price * quantity
+            order_product.total = product.price * quantity
             order_product.save()
             self.logs.create(log=f"{datetime.datetime.now()}: Đã cập nhật sản phẩm {product.name}, thay đổi số lượng thành {quantity}")
             self.calculate_total()
@@ -140,7 +173,6 @@ class Order(models.Model):
         self.logs.create(
             log=f"{datetime.datetime.now()}: Đã xóa sản phẩm {product.name} ra khỏi giỏ hàng")
         self.calculate_total()
-
 
     def update_location(self,request):
         if self.order_status.code != "pending": raise ValidationError(
@@ -161,15 +193,23 @@ class Order(models.Model):
     def validate(self):
         if len(self.store_list) > MAX_NUM_OF_STORES:
             raise ValidationError(f"Số cửa hàng được đặt tối đa là {MAX_NUM_OF_STORES}. Bạn đã đặt hàng trên {len(self.store_list)} cửa hàng")
-        for i in self.store_list:
-            if i == self.customer_store:
+
+        for store in self.store_list:
+            if store == self.customer_store:
                 raise ValidationError(f"Bạn không thể đặt món từ cửa hàng của chính mình")
-            if i.status.code != "active":
-                raise ValidationError(f"Không thể đặt hàng từ Cửa hàng {i.name} - {i.address}")
-            if distance(i.location, self.destination) > MAX_DISTANCE:
-                raise ValidationError(f"Khoảng cách từ vị trí đặt hàng đến cửa hàng {i.name} - {i.address} vượt quá {MAX_DISTANCE} km.")
-            if not i.is_open:
-                raise ValidationError(f"Cửa hàng {i.name} - {i.address} hiện tại không mở cửa")
+            if store.status.code != "active":
+                raise ValidationError(f"Không thể đặt hàng từ Cửa hàng {store.name} - {store.location.address}")
+            if distance(store.location, self.destination) > MAX_DISTANCE:
+                raise ValidationError(f"Khoảng cách từ vị trí đặt hàng đến cửa hàng {store.name} - {store.location.address} vượt quá {MAX_DISTANCE} km.")
+            if not store.is_open:
+                raise ValidationError(f"Cửa hàng {store.name} - {store.location.address} hiện tại không mở cửa")
+
+        if len(self.order_products.all()) > MAX_ORDER_PRODUCTS_COUNT:
+            raise ValidationError(f"Số lượng sản phẩm dược đặt không quá {MAX_ORDER_PRODUCTS_COUNT}")
+
+        for order_product in self.order_products.all():
+            if order_product.product.status.code != "active":
+                raise ValidationError(f"Sản phẩm {order_product.product.name} không có sẵn để đặt")
 
     def submit_order(self):
         if self.order_status.code != "pending": raise ValidationError(
@@ -178,6 +218,7 @@ class Order(models.Model):
         if not self.expire_check():
             self.validate()
             self.calculate_total()
+
 
 
 
@@ -225,7 +266,8 @@ class Order_Product(models.Model):
     order = models.ForeignKey(Order,on_delete=models.CASCADE,related_name="order_products")
     product = models.ForeignKey(Product,on_delete=models.SET_NULL,null=True,related_name="order_products")
     quantity = models.PositiveIntegerField()
-    price = MoneyField(max_digits=256,decimal_places=2,default_currency='VND',default=0)
+    price = MoneyField(max_digits=256, decimal_places=2, default_currency='VND', default=0)
+    total = MoneyField(max_digits=256, decimal_places=2, default_currency='VND', default=0)
     note = models.TextField(max_length=255,blank=True,null=True)
     status = models.ForeignKey(Order_Product_Status,on_delete=models.DO_NOTHING,null=True)
 
