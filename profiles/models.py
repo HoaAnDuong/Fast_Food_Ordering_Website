@@ -43,7 +43,7 @@ class Profile(models.Model):
 	avatar = models.ImageField(default='avatars/avatar.png', upload_to='avatars/')
 	location = models.ForeignKey(Location,on_delete=models.SET_NULL,null=True)
 	status = models.ForeignKey(User_Status,on_delete=models.DO_NOTHING,blank=True,null=True)
-	current_order = models.ForeignKey(Order,on_delete=models.DO_NOTHING,blank=True,null=True)
+	current_order = models.ForeignKey(Order,on_delete=models.SET_NULL,blank=True,null=True)
 	moderated = models.DateTimeField(blank=True, null=True)
 	updated = models.DateTimeField(auto_now=True)
 	created = models.DateTimeField(auto_now_add=True)
@@ -51,6 +51,9 @@ class Profile(models.Model):
 	class Meta:
 		db_table = "Profiles"
 		verbose_name = "Profile"
+
+	def __str__(self):
+		return f"{self.user.username}"
 
 	def birthdate_update(self,date):
 		str_date = date.split("-")

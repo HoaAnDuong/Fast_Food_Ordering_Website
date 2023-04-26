@@ -23,14 +23,14 @@ var current_lngLatString = `${Math.round(lng.value * 100000) / 100000}, ${Math.r
 current_location_marker.bindPopup(`<b>${lngLatString}</b><p>${address.value}</p>`);
 current_location_marker.openPopup();
 
-function reverseGeocoderHandler(error,result){
-    if(error){
-    }else{
-        console.log(result);
-        lngLatString = `${Math.round(result.latlng.lng * 100000) / 100000}, ${Math.round(result.latlng.lat * 100000) / 100000}`;
-        current_location_marker.bindPopup(`<b>${lngLatString}</b><p>${result.address.LongLabel}</p>`);
-        current_location_marker.openPopup();
-    }
+//function reverseGeocoderHandlerCurrentLocation(error,result){
+//    if(error){
+//    }else{
+//        console.log(result);
+//        lngLatString = `${Math.round(result.latlng.lng * 100000) / 100000}, ${Math.round(result.latlng.lat * 100000) / 100000}`;
+//        current_location_marker.bindPopup(`<b>${lngLatString}</b><p>${result.address.LongLabel}</p>`);
+//        current_location_marker.openPopup();
+//    }
 }
 
 

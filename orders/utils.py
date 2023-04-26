@@ -33,6 +33,9 @@ def create_order(user):
         order = Order.objects.create(customer=user,destination=new_location,
                                      payment_status=unpaid_status,delivery_status = delivery_pending_status,
                                      order_status = order_pending_status)
+        user.profile.current_order = order
+        user.profile.save()
         return order
     else:
         raise ValidationError("Bạn không phải là Khách Hàng, bạn không thể tạo ra một đơn hàng mới.")
+

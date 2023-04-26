@@ -13,16 +13,7 @@ L.tileLayer('http://mt1.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
   attribution: 'Google'
 }).addTo(map);
 
-var greenIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-var orangeIcon = new L.Icon({
+var storeIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -31,7 +22,16 @@ var orangeIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-var destination_marker = L.marker([destination_lat.value,destination_lng.value],{icon: greenIcon})
+var destinationIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+var destination_marker = L.marker([destination_lat.value,destination_lng.value],{icon: destinationIcon})
 destination_marker.addTo(map)
 
 var lngLatString = `${Math.round(destination_lng.value * 100000) / 100000}, ${Math.round(destination_lat.value * 100000) / 100000}`;
@@ -46,7 +46,7 @@ for (let i=0;i < num_of_store.value;i++){
     store_address = document.getElementById(`store_${i}_address`)
     store_name = document.getElementById(`store_${i}_name`)
 
-    store_marker = L.marker([store_lat.value,store_lng.value],{icon: orangeIcon})
+    store_marker = L.marker([store_lat.value,store_lng.value],{icon: storeIcon})
     store_marker.addTo(map)
     lngLatString = `${Math.round(store_lng.value * 100000) / 100000}, ${Math.round(store_lat.value * 100000) / 100000}`;
     store_marker.bindPopup(`<b>${lngLatString}</b><br><b>${store_name.innerHTML}</b><p>${store_address.value}</p>`);

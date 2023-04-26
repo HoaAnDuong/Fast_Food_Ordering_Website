@@ -52,7 +52,7 @@ $.ajax({
 async function currentLocationRefresh(){
     while(true){
         navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
-        await sleep(10000);
+        await sleep(2000);
     }
 };
 currentLocationRefresh();

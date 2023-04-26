@@ -3,6 +3,11 @@
     <div class = "container-fluid">
         {% if user.is_authenticated %}
             {% if deliverer_profile %}
+                <ul class="nav nav-tabs">
+                  <li class="active"><a href="/deliverer-profile">Thông tin Người giao hàng</a></li>
+                  <li><a href="/current-delivery">Đơn hàng hiện tại</a></li>
+                </ul>
+                <br>
                 <ul class="col-md-2 nav nav-pills nav-stacked">
                     <li class="active"><a data-toggle = "tab" href="#profile">Thông tin Cơ bản</a></li>
                     <li><a data-toggle = "tab" href="#deliverer-profile">Thông tin Người Giao Hàng</a></li>

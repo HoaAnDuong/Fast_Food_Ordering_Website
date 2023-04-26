@@ -64,7 +64,7 @@ async function currentLocationRefresh(){
                console.log(json);
             }
         });
-        await sleep(10000);
+        await sleep(2000);
     }
 };
 

@@ -8,6 +8,7 @@ const subregion_1 = document.getElementById("subregion_1")
 const subregion_2 = document.getElementById("subregion_2")
 
 
+
 var map = L.map('map').setView([lat.value,lng.value], 15);
 
 //roadmap tilelayer:'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'
@@ -23,7 +24,7 @@ location_marker.addTo(map)
 
 var locationTab = document.getElementById('location');
 var observer1 = new MutationObserver(function(){
-  location_map.invalidateSize();
+  map.invalidateSize();
 });
 observer1.observe(locationTab, {attributes: true});
 
@@ -41,11 +42,13 @@ function sleep(ms) {
 
 function reverseGeocoderHandler(error,result){
     if(error){
+        console.log(error);
     }else{
+
         console.log(result);
 
-        address.value = result.address.LongLabel
-        country.value = result.address.CntryName
+        address.value = result.address.LongLabel;
+        country.value = result.address.CntryName;
         region.value = result.address.Region
         subregion_1.value = result.address.District != "" ? result.address.District : result.address.City
         subregion_2.value = result.address.Neighborhood
@@ -63,7 +66,6 @@ function onMapClickHandler(e){
     lng.value = latlng.lng;
     var esri_reverseGeocoder = L.esri.Geocoding.reverseGeocode({apikey: apiKey}).latlng(latlng);
     esri_reverseGeocoder.run(reverseGeocoderHandler);
-    sleep(100)
 }
 
 

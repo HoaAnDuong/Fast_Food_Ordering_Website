@@ -53,7 +53,7 @@ def ProductDetailView(request,slug):
                     if current_order == None: raise ValidationError("Đơn hàng hiện tại đã hết hạn")
                     try:
                         current_order.update_product(product=product,quantity = request.POST.get('quantity'),
-                                             note=request.POST.get('quantity'))
+                                             note=request.POST.get('note'))
                     except:
                         current_order.add_product(product=product, quantity=request.POST.get('quantity')
                                                   , note=request.POST.get('note'))

@@ -126,7 +126,7 @@ TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -163,4 +163,5 @@ AXES_COOLOFF_TIME: 1
 MAX_ORDER_PRODUCTS_COUNT = 15
 MAX_DISTANCE = 8
 MAX_NUM_OF_STORES = 5
+MAX_DELIVERY_DISTANCE = 5
 

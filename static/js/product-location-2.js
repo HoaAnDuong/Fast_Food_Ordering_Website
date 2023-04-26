@@ -29,16 +29,7 @@ var observer1 = new MutationObserver(function(){
 });
 observer1.observe(locationTab, {attributes: true});
 
-var greenIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-var orangeIcon = new L.Icon({
+var storeIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
   iconSize: [25, 41],
@@ -47,7 +38,16 @@ var orangeIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-var destination_marker = L.marker([lat.value,lng.value],{icon: greenIcon})
+var destinationIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+var destination_marker = L.marker([lat.value,lng.value],{icon: destinationIcon})
 destination_marker.addTo(map)
 
 var lngLatString = `${Math.round(lng.value * 100000) / 100000}, ${Math.round(lat.value * 100000) / 100000}`;
@@ -56,9 +56,9 @@ destination_marker.openPopup();
 
 antpaths = []
 
-shortest_path_antpaths = []
+const routeLines = L.layerGroup().addTo(map);
 
-
+store_marker = []
 
 
 destination_latlng = L.latLng({lat:lat.value,lng:lng.value});
@@ -89,6 +89,7 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
 for (let i=0;i < num_of_store.value;i++){
     store_lat = document.getElementById(`store_${i}_lat`)
     store_lng = document.getElementById(`store_${i}_lng`)
@@ -97,11 +98,11 @@ for (let i=0;i < num_of_store.value;i++){
 
     stores_latlng[i] = L.latLng({lat:store_lat.value,lng:store_lng.value})
 
-    store_marker = L.marker([store_lat.value,store_lng.value],{icon: orangeIcon})
-    store_marker.addTo(map)
+    store_marker[i] = L.marker([store_lat.value,store_lng.value],{icon: storeIcon})
+    store_marker[i].addTo(map)
     lngLatString = `${Math.round(store_lng.value * 100000) / 100000}, ${Math.round(store_lat.value * 100000) / 100000}`;
-    store_marker.bindPopup(`<b>${lngLatString}</b><br><b>${store_name.innerHTML}</b><p>${store_address.value}</p>`);
-    store_marker.openPopup();
+    store_marker[i].bindPopup(`<b>${lngLatString}</b><br><b>${store_name.innerHTML}</b><p>${store_address.value}</p>`);
+    store_marker[i].openPopup();
 
     distance = calDistance(destination_latlng,stores_latlng[i])
     antpaths.push(L.layerGroup());
@@ -128,16 +129,36 @@ for (let i=0;i < num_of_store.value;i++){
 
 stores_list_permutation = permute(stores_latlng)
 
-for(let i = 0;i<stores_latlng.length;i++){
-    shortest_path_antpaths.push(L.layerGroup());
+function routeHandler(response){
+    routeLines.clearLayers();
+    let path = [].concat(...response.routes.geoJson.features[0].geometry.coordinates)
+    path.forEach((item) => {
+        item.reverse();
+    })
+    L.polyline.antPath(path, {
+      "delay": 400,
+      "dashArray": [
+        10,
+        20
+      ],
+      "weight": 5,
+      "color": "#0388fc",
+      "pulseColor": "#FFFFFF",
+      "paused": false,
+      "reverse": false,
+      "hardwareAccelerated": true
+    }).addTo(routeLines);
+    document.getElementById("total_length").value = response.routes.geoJson.features[0].properties.Total_Kilometers
+    document.getElementById("total_length_label").innerHTML = `<label>Tổng chiều dài: ${response.routes.geoJson.features[0].properties.Total_Kilometers} km</label>`
 }
 
-function shortest_path(show=false){
-    min_length = Infinity
+function shortest_path(){
+    let = min_length = Infinity
+
     min_path = []
     for(let i = 0;i < stores_list_permutation.length;i++){
         total_length = 0
-        let chosen_path = stores_list_permutation[i]
+        let chosen_path = [...stores_list_permutation[i]]
         chosen_path.push(destination_latlng)
         for(let j = 0;j < chosen_path.length-1;j++){
             total_length += calDistance(chosen_path[j],chosen_path[j+1]);
@@ -147,32 +168,25 @@ function shortest_path(show=false){
             min_length = total_length
         }
     }
-    if(show){
-        for(let i = 0;i < min_path.length-1;i++){
-            console.log(i,shortest_path_antpaths[i])
-            shortest_path_antpaths[i].clearLayers()
-            let polyline = L.polyline.antPath([min_path[i], min_path[i+1]], {
-              "delay": 400,
-              "dashArray": [
-                10,
-                20
-              ],
-              "weight": 5,
-              "color": "#0388fc",
-              "pulseColor": "#FFFFFF",
-              "paused": false,
-              "reverse": false,
-              "hardwareAccelerated": true
-            })
-            polyline.addTo(shortest_path_antpaths[i])
-            shortest_path_antpaths[i].addTo(map);
-        }
+    for(let i = 0;i < min_path.length; i++){
+        min_path[i] = [min_path[i].lng,min_path[i].lat]
     }
+    console.log(min_path)
+    router = arcgisRest.solveRoute({
+            stops: min_path,
+            endpoint: "https://route-api.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World/solve",
+            authentication
+    });
+    router.then(routeHandler).catch((error) => {
+            console.error(error);
+            alert("There was a problem using the route service. See the console for details.");
+    });
 
-    return min_path
+    return {route:min_path,total_length:document.getElementById("total_length").value}
+
 }
 
-console.log(shortest_path(show=true))
+console.log(shortest_path())
 
 function reverseGeocoderHandler(error,result){
     if(error){
@@ -191,7 +205,7 @@ function reverseGeocoderHandler(error,result){
     }
 }
 
-function onMapClickHandler(e){
+function mapChangeHandler(e){
     var latlng = e.latlng;
     destination_marker.setLatLng(latlng)
     destination_latlng.lat = latlng.lat;
@@ -226,9 +240,85 @@ function onMapClickHandler(e){
         antpaths[i].addTo(map);
         polyline.openPopup();
     }
-    shortest_path(show=true)
-    sleep(100)
+    shortest_path();
+    sleep(1000);
 }
 
-map.on("click",onMapClickHandler);
+store_table = document.getElementById("store_table");
+
+map.on("click",mapChangeHandler);
+
+var store_table_observer = new MutationObserver(function(mutations, observer) {
+    console.log(mutations)
+    $(store_table).trigger("change");
+});
+
+
+store_table_observer.observe(store_table, {
+    attributes: true
+});
+$(store_table).change(mapChangeHandler);
+
+
+$(document).on('submit','#location',function(e){
+    e.preventDefault();
+    let inner_country = "";
+    let inner_region = "";
+    let inner_subregion_1 = "";
+    let inner_subregion_2 = "";
+    let inner_total_length = 0;
+    var esri_reverseGeocoder = L.esri.Geocoding.reverseGeocode({apikey: apiKey}).latlng({lat:$("#lat").val(),lng:$("#lng").val()});
+    esri_reverseGeocoder.run((error,result)=>{
+        if(error){
+            console.error(error)
+        }else{
+            console.log(result);
+
+            inner_country.value = result.address.CntryName
+            inner_region.value = result.address.Region
+            inner_subregion_1.value = result.address.District != "" ? result.address.District : result.address.City
+            inner_subregion_2.value = result.address.Neighborhood
+        }
+    });
+    shortest_path()
+
+    $.ajax({
+        type:'POST',
+        url:'/current-order/',
+        data:
+        {
+            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+            method_tag:"location",
+            lat:$("#lat").val(),
+            lng:$("#lng").val(),
+            address:$("#address").val(),
+            country:inner_country,
+            region:inner_region,
+            subregion_1:inner_subregion_1,
+            subregion_2:inner_subregion_2,
+            total_length:$("#total_length").val()
+        }
+    })
+    location.reload()
+});
+$(document).on('submit','#submit_order_form',function(e){
+    e.preventDefault();
+
+    shortest_path()
+
+    $.ajax({
+        type:'POST',
+        url:'/current-order/',
+        data:
+        {
+            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+            method_tag:"submit_order",
+            password:$("#password").val()
+            total_length:$("#total_length").val()
+        }
+    })
+    location.reload()
+});
+
+
 

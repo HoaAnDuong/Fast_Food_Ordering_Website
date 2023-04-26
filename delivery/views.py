@@ -65,7 +65,8 @@ def DelivererProfileView(request):
                 try:
                     with transaction.atomic():
                         profile.update_location(request)
-
+                        deliverer_profile.current_location.country = request.POST.get('country')
+                        deliverer_profile.current_location.region = request.POST.get('region')
                 except Exception as e:
                     ctx["error"] = "location"
                     messages.error(request, message=f"{type(e)}:{e}")
@@ -77,5 +78,5 @@ def CurrentLocation(request):
         request.user.deliverer_profile.update_current_location(request)
         return HttpResponse(json.dumps({
             "message": "Current location posted successfully."
-        },indent=4))
+        },indent=4),status = 200)
     return Http404()

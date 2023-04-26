@@ -120,7 +120,7 @@ def OrderProductView(request,page_id):
     products = Product.objects.filter(store = store)
     order_products = []
     for product in products:
-        order_products += product.order_products.all()
+        order_products += product.order_products.exclude(status__code = "pending")
     paginator = Paginator(order_products, 10)
     page = paginator.get_page(page_id)
     ctx["page"] = page
