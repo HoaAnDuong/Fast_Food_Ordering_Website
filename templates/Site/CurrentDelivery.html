@@ -1,10 +1,463 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'Site/index.html' %}
+{% block content %}
+    <div class = "container-fluid">
+        {% if user.is_authenticated %}
+            {% if current_order %}
+            <ul class="nav nav-tabs">
+              <li><a href="/deliverer-profile">Thông tin Người giao hàng</a></li>
+              <li class="active"><a href="/current-delivery">Đơn vận chuyển hiện tại</a></li>
+            </ul>
+            <br>
+            <ul class="col-md-2 nav nav-pills nav-stacked">
+                <li class="active"><a data-toggle = "tab" href="#profile">Thông tin Đơn Hàng</a></li>
+                <li><a data-toggle = "tab" href="#order_product_tab">Giỏ hàng</a></li>
+                <li><a data-toggle = "tab" href="#order_log">Nhật ký</a></li>
+            </ul>
+            <div class = "col-md-8 tab-content">
+                <div class = "tab-pane fade in active" id = "profile">
+                    <form method = "POST">
+                        {% csrf_token %}
+                        <div>
+                            <h2>Đơn hàng hiện tại</h2>
+                        </div>
+                        <input type="hidden" name="form_tag" value = "update_order" readonly>
+                        <div>
+                            <h4>Thời điểm khởi tạo:</h4>
+                            <label>{{current_order.created}}</label>
+                        </div>
+                        <div>
+                            <h4>Thời điểm có mặt:</h4>
+                            <label>{{current_order.delivery.arrived}}</label>
+                        </div>
+                        <div>
+                            <h4>Phương thức thanh toán</h4>
 
-</body>
-</html>
+                            <select name="payment_method">
+                                {% for payment_method in payment_methods %}
+                                    <option value = {{payment_method.id}} {% if current_order.payment_method == payment_method %}selected{% endif %}>{{payment_method.code}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <h4>Tình trạng đơn hàng:</h4>
+                            <label id = "order_status">{{current_order.order_status.code}}</label>
+                        </div>
+                        <div>
+                            <h4>Tình trạng vận chuyển:</h4>
+                            <label id = "delivery_status">{{current_order.delivery_status.code}}</label>
+                        </div>
+                        <div>
+                            <h4>Tình trạng thanh toán:</h4>
+                            <label id = "payment_status">{{current_order.payment_status.code}}</label>
+                        </div>
+                        <div>
+                            <h4>Phí vận chuyển hàng ban đêm:</h4>
+                            <label id = "nighttime_fee">{{current_order.nighttime_fee}}</label>
+                        </div>
+                        <div>
+                            <h4>Phí vận chuyển{% if current_order.order_status.code == "pending" %}(Ước tính){% endif %}:</h4>
+                            <label id = "delivery_fee">{{current_order.delivery_fee}}</label>
+                        </div>
+                        <div>
+                            <h4>Tổng tiền các món ăn:</h4>
+                            <label id = "product_total">{{current_order.product_total}}</label>
+                        </div>
+                        <div>
+                            <h4>Tổng tiền:</h4>
+                            <label id = "total">{{current_order.total}}</label>
+                        </div>
+                        {% if current_order.order_status.code == "pending" %}
+                        {% endif %}
+                    </form>
+
+                    {% if store_list %}
+                        <h3>Danh Sách Cửa Hàng</h3>
+                        <input type = "hidden" id="num_of_store" value = "{{store_list|length}}">
+                        <table class = "table table-hover" style = "width = auto;" id = "store_table">
+                            <thead>
+                                <tr>
+                                    <th>Tên</th>
+                                    <th>Địa chỉ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in store_list %}
+                                <tr>
+                                    <td>
+                                        <label id = "store_{{ forloop.counter0 }}_name">{{item.name}}</label>
+                                        <input type = "hidden" id="store_{{ forloop.counter0 }}_id" value = {{item.id}}>
+                                    </td>
+                                    <td>
+                                        <label>{{item.location.address}}</label>
+                                        <input type = "hidden" id="store_{{ forloop.counter0 }}_lat" value = {{item.location.lat}}>
+                                        <input type = "hidden" id="store_{{ forloop.counter0 }}_lng" value = {{item.location.lng}}>
+                                        <input type = "hidden" id="store_{{ forloop.counter0 }}_address" value = "{{item.location.address}}">
+                                        <div id = "store_{{ forloop.counter0 }}_modal" class = "modal fade" role="dialog">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                        <h4 class="modal-title">
+                                                            Nhận món
+                                                        </h4>
+                                                    </div>
+                                                    {% if item.order_products|length != 0 %}
+                                                    <form method = "POST" id = "store_{{ forloop.counter0 }}_get_product" enctype="multipart/form-data">
+                                                    <div class = "modal-body">
+                                                            <h4>Bạn muốn xác nhận nhận toàn bộ món từ quán {{item.name}}</h4>
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="form_tag" value="get_store_products">
+                                                            <input type="hidden" name="store_id" value= {{item.id}}>
+                                                            <table class = "table table-hover" id = "store_{{ forloop.counter0 }}_product_table">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Tên món</th>
+                                                                        <th>Số lượng</th>
+                                                                        <th>Đơn giá</th>
+                                                                        <th>Tổng</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                {% for order_product in item.order_products%}
+                                                                    <tr>
+                                                                        <td>{{order_product.product.name}}</td>
+                                                                        <td>{{order_product.quantity}}</td>
+                                                                        <td>{{order_product.price}}</td>
+                                                                        <td>{{order_product.total}}</td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                                <tr>
+                                                                    <td>Tổng</td>
+                                                                    <td></td>
+                                                                    <td></td>
+                                                                    <td>{{item.total}}</td>
+                                                                </tr>
+                                                                </tbody>
+                                                            </table>
+                                                            <h4>Lưu ý: Trước khi nhận món bằng cách này, hãy chụp một bức ảnh chứa toàn bộ các món được đặt từ quán này</h4>
+                                                            <input type="file" name="image" accept="image/*">
+                                                    </div>
+                                                    <div class = "modal-footer">
+                                                        <button type="submit" class="btn btn-primary">Nhận món</button>
+                                                        <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                    </div>
+                                                    </form>
+                                                    {% else %}
+                                                    <div class = "modal-body">
+                                                        <h4>Bạn đã nhận hết món từ quán {{item.name}}.</h4>
+                                                    </div>
+                                                    <div class = "modal-footer">
+                                                        <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                    {% endif %}
+
+
+                    <form method = "POST" id = "delivery_location">
+                        <h3>Người giao hàng</h3>
+                        <h4>{{current_order.deliverer.name}} </h4>
+
+                        <h5> Số điện thoại:{{current_order.deliverer.phone_number}} </h5>
+
+                        <h5> Email:{{current_order.deliverer.email}}</h5>
+                        <input type = "hidden" id="deliverer_lat" value = {{current_order.deliverer.current_location.lat}}>
+                        <input type = "hidden" id="deliverer_lng" value = {{current_order.deliverer.current_location.lng}}>
+
+                        <h3>Danh sách các điểm đến:</h3>
+                        <input type = "hidden" id="num_points" value = "{{route.stores|length}}">
+                        <table class = "table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Mô tả</th>
+                                    <th>Tọa độ</th>
+                                    <th>Địa chỉ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+
+                                        <label>Điểm bắt đầu</label>
+
+                                    </td>
+                                    <td>
+                                        <label>{{route.start.location.lat}} {{route.start.location.lng}}</label>
+                                        <input type = "hidden" id="start_lat" value = {{route.start.location.lat}}>
+                                        <input type = "hidden" id="start_lng" value = {{route.start.location.lng}}>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                {% for point in route.stores %}
+                                    <tr>
+                                        <td>
+                                            <label>Quán ăn {{forloop.counter}}</label>
+                                        </td>
+                                        <td>
+                                            <label>{{point.location.lat}} {{point.location.lng}}</label>
+                                            <input type = "hidden" id="point_{{ forloop.counter0 }}_lat" value = {{point.location.lat}}>
+                                            <input type = "hidden" id="point_{{ forloop.counter0 }}_lng" value = {{point.location.lng}}>
+                                        </td>
+                                        <td>
+                                            <label>{{point.location.address}}</label>
+                                            <input type = "hidden" id="point_{{ forloop.counter0 }}_address" value = "{{point.location.address}}">
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td>
+                                        <label>Điểm giao hàng</label>
+                                    </td>
+                                    <td>
+                                        <label>{{route.destination.location.lat}} {{route.destination.location.lng}}</label>
+                                        <input type = "hidden" id="destination_lat" value = {{route.destination.location.lat}}>
+                                        <input type = "hidden" id="destination_lng" value = {{route.destination.location.lng}}>
+                                    </td>
+                                    <td>
+                                        <label>{{route.destination.location.address}}</label>
+                                        <input type = "hidden" id="destination_address" value = "{{route.destination.location.address}}">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <label id="total_length_label">Tổng chiều dài: {{current_order.delivery.total_length}} km</label>
+
+                        <div id = "map" style = "height:80vh; width:80vw; "></div>
+                        {% load static %}
+                        <script src="{% static 'js/current-delivery-map.js' %}"></script>
+                    </form>
+
+                </div>
+                <div class = "tab-pane fade in" id = "order_product_tab" style="width:auto">
+                    <form method = "POST">
+                        <h3>Giỏ hàng({{current_order.total_quantity}}):</h3>
+                        <table id = "order_product_table" class = "table table-hover" style = "width: auto;">
+                            <thead>
+                                <tr>
+                                    <th>Tên món</th>
+                                    <th>Hình ảnh</th>
+                                    <th>Đơn Giá</th>
+                                    <th>Số lượng</th>
+                                    <th>Tổng</th>
+                                    <th>Trạng thái</th>
+                                    <th>Lần cập nhật gần nhất</th>
+                                    <th>Ghi chú</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order_product in current_order.order_products.all %}
+                                <tr>
+                                    <td>{{order_product.product.name}}</td>
+                                    <td><img style = "width:100px; height:62px;" src = "{{order_product.product.image.url}}"></td>
+                                    <td>{{order_product.price}}</td>
+                                    <td>{{order_product.quantity}}</td>
+                                    <td>{{order_product.total}}</td>
+                                    <td>{{order_product.status.code}}</td>
+                                    <td></td>
+                                    <td>{{order_product.note}}</td>
+                                    <td>
+                                        {% if order_product.status.code == "submitted" %}
+                                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#get_product_{{ forloop.counter0 }}_modal">
+                                            Nhận món
+                                        </button>
+                                        <div id = "get_product_{{ forloop.counter0 }}_modal" class = "modal fade" role="dialog">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                        <h4 class="modal-title">
+                                                            Nhận món
+                                                        </h4>
+                                                    </div>
+                                                    <form method = "POST" id = "get_product_{{ forloop.counter0 }}_form" enctype="multipart/form-data">
+                                                        <div class = "modal-body">
+                                                            {% csrf_token %}
+                                                            <input type = "hidden" name = "form_tag" value = "get_product" readonly>
+                                                            <input type = "hidden" name = "product_id" value = {{order_product.product.id}} readonly>
+                                                            <h4>Bạn có muốn xác nhận nhận món {{order_product.product.name}}?</h4>
+                                                            <h4>Lưu ý: Trước khi nhận món, hãy chụp một tấm ảnh có chứa sản phẩm được nhận.</h4>
+                                                            <input type="file" name="image" accept="image/*">
+                                                        </div>
+
+                                                        <div class="modal-footer">
+                                                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% elif order_product.status.code == "delivering" %}
+                                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#update_product_{{ forloop.counter0 }}_image_modal">
+                                                Ảnh minh chứng
+                                            </button>
+
+                                            <div id = "update_product_{{ forloop.counter0 }}_image_modal" class = "modal fade" role="dialog">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                            <h4 class="modal-title">
+                                                                Ảnh minh chứng
+                                                            </h4>
+                                                        </div>
+                                                        <form></form>
+                                                        <form></form>
+                                                        <form method = "POST" id = "update_product_{{ forloop.counter0 }}_image_form" enctype="multipart/form-data">
+                                                            <div class = "modal-body">
+
+                                                                {% csrf_token %}
+                                                                <input type = "hidden" name = "form_tag" value = "update_product_image" readonly>
+                                                                <input type = "hidden" name = "product_id" value = {{order_product.product.id}} readonly>
+                                                                <h4>Ảnh minh chứng món {{order_product.product.name}}:</h4>
+                                                                <img src = "{{order_product.image.url}}" style = "width:40vw;height:25vw;">
+                                                                <h4>Bạn có muốn thay đổi ảnh minh chứng món {{order_product.product.name}}?</h4>
+
+                                                                <input type="file" name="image" accept="image/*">
+                                                            </div>
+
+                                                            <div class="modal-footer">
+                                                                <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                                <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>Tổng</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>{{current_order.product_total}}</td>
+                                    <td></td>
+                                    <td></td>
+
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    </form>
+
+                </div>
+
+                <div class = "tab-pane fade in" id = "order_log">
+                    <h3>Nhật ký đơn hàng:</h3>
+                    <table class = "table table-hover" style = "width:auto" id = "log_table">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Nội dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <h2>Hành động</h2>
+                {% if current_order.order_status.code == "arrived" %}
+
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#arrived_modal">
+                    Xác nhận đã giao hàng
+                </button>
+                <form method = "POST" enctype="multipart/form-data">
+                    <div id = "arrived_modal" class = "modal fade" role="dialog" >
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h4 class="modal-title">
+                                        Xác nhận giao hàng
+                                    </h4>
+                                </div>
+                                <div class="modal-body">
+                                    {% csrf_token %}
+                                    <input type = "hidden" name = "form_tag" value = "dispatch" readonly>
+                                    <h4>Bạn có giao hết tất cả các món mà khách hàng yêu cầu và nhận tiền từ khách hàng chưa?</h4>
+                                    <h4>Lưu ý:</h4>
+                                    <h4>Hãy chụp một tấm ảnh xác nhận quá trình giao hàng.</h4>
+                                    <input type="file" name="image" accept="image/*">
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-success" onClick="window.location.reload()">Có</button>
+                                    <button type="button" class="btn btn-danger" data-dismiss="modal">Không</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </form>
+                <br>
+                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#ghosted_modal">
+                    Báo cáo Khách hàng không nhận hàng và thanh toán
+                </button>
+                <form method = "POST" enctype="multipart/form-data">
+                    <div id = "ghosted_modal" class = "modal fade" role="dialog">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h4 class="modal-title">
+                                        Xác nhận giao hàng
+                                    </h4>
+                                </div>
+                                <div class="modal-body">
+                                    {% csrf_token %}
+                                    <input type = "hidden" name = "form_tag" value = "ghosted" readonly>
+                                    <h4>Bạn có xác nhận báo cáo khách hàng không nhận hàng vả trả tiền?</h4>
+                                    <h4>Lưu ý:</h4>
+                                    <h4>Hãy chụp một tấm ảnh xác nhận báo cáo.</h4>
+                                    <input type="file" name="image" accept="image/*">
+                                    <h4>Yêu cầu nhập mật khẩu để xác nhận báo cáo</h4>
+                                    <input type="password" name="password">
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-success" onClick="window.location.reload()">Có</button>
+                                    <button type="button" class="btn btn-danger" data-dismiss="modal">Không</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </form>
+                {% else %}
+                <h4>Hiện tại vẫn chưa có hành động nào cần thực hiện. Hãy tiếp tục nhận các món từ các quán ăn.</h4>
+                {% endif %}
+                {% load static %}
+                <script src="{% static 'js/current-delivery.js' %}"></script>
+            </div>
+            {% else %}
+                <meta http-equiv="refresh" content="1; url='/deliverer-profile'" />
+                <h3>Hiện tại vẫn chưa có đơn hàng mới</h3>
+            {% endif %}
+
+
+
+        {% else %}
+          <meta http-equiv="refresh" content="1; url='/login'" />
+          <div>
+              <h3>You are not logged in now, so you will be directed to Login Page</h3>
+          </div>
+        {% endif %}
+    </div>
+{% endblock %}

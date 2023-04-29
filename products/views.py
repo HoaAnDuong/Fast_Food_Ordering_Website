@@ -31,7 +31,7 @@ def ProductDetailView(request,slug):
         ctx["order_product"] = None
     if not request.user.is_anonymous:
         if request.method == 'POST':
-            match request.POST.get('method_tag'):
+            match request.POST.get('form_tag'):
 
                 case "add_product":
                     current_order_expire_check(request.user)
@@ -95,7 +95,7 @@ def ProductBaseView(request,paginator,page):
 
     if not request.user.is_anonymous:
         if request.method == "POST":
-            match request.POST.get("method_tag"):
+            match request.POST.get("form_tag"):
                 case "create_order":
                     create_new_order(request.user)
             current_order = request.user.profile.current_order

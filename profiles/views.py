@@ -26,7 +26,7 @@ def ProfileView(request):
     if request.method == "POST":
         print(request.POST)
 
-        match request.POST.get("method_tag"):
+        match request.POST.get("form_tag"):
             case "avatar":
                 try:
                     if request.FILES.get('avatar') == None: raise FileNotFoundError("Ảnh chưa được tải lên")

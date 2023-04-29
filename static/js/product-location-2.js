@@ -9,9 +9,7 @@ const num_of_store = document.getElementById("num_of_store")
 
 const MAX_DISTANCE = 8
 
-const apiKey = "AAPK5a1319c4648247188e709e0176c0a073pqXTy5i1h6UW8b2prBtWB59DSR7OsFx-2yGG0CpcSTeKcf8ZkrkMbg6EYLZ0p3VW";
 
-const authentication = arcgisRest.ApiKeyManager.fromKey(apiKey);
 
 var map = L.map('map').setView([lat.value,lng.value], 15);
 
@@ -288,7 +286,7 @@ $(document).on('submit','#location',function(e){
         data:
         {
             csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
-            method_tag:"location",
+            form_tag:"location",
             lat:$("#lat").val(),
             lng:$("#lng").val(),
             address:$("#address").val(),
@@ -297,13 +295,38 @@ $(document).on('submit','#location',function(e){
             subregion_1:inner_subregion_1,
             subregion_2:inner_subregion_2,
             total_length:$("#total_length").val()
+        },
+        success:function (data){
+            location.reload();
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert('Đã có lỗi xảy ra!');
+            console.log(errorThrown);
         }
     })
-    location.reload()
+
 });
+
 $(document).on('submit','#submit_order_form',function(e){
     e.preventDefault();
+    let inner_country = "";
+    let inner_region = "";
+    let inner_subregion_1 = "";
+    let inner_subregion_2 = "";
+    let inner_total_length = 0;
+    var esri_reverseGeocoder = L.esri.Geocoding.reverseGeocode({apikey: apiKey}).latlng({lat:$("#lat").val(),lng:$("#lng").val()});
+    esri_reverseGeocoder.run((error,result)=>{
+        if(error){
+            console.error(error)
+        }else{
+            console.log(result);
 
+            inner_country.value = result.address.CntryName
+            inner_region.value = result.address.Region
+            inner_subregion_1.value = result.address.District != "" ? result.address.District : result.address.City
+            inner_subregion_2.value = result.address.Neighborhood
+        }
+    });
     shortest_path()
 
     $.ajax({
@@ -312,13 +335,28 @@ $(document).on('submit','#submit_order_form',function(e){
         data:
         {
             csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
-            method_tag:"submit_order",
-            password:$("#password").val()
+            form_tag:"submit_order",
+            password:$("#password").val(),
+            lat:$("#lat").val(),
+            lng:$("#lng").val(),
+            address:$("#address").val(),
+            country:inner_country,
+            region:inner_region,
+            subregion_1:inner_subregion_1,
+            subregion_2:inner_subregion_2,
             total_length:$("#total_length").val()
+        },
+        success:function (data){
+        location.reload();
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert('Đã có lỗi xảy ra!');
+            console.log(errorThrown);
         }
     })
-    location.reload()
+
 });
+
 
 
 

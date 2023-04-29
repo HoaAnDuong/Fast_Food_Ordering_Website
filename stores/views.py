@@ -22,7 +22,7 @@ def StoreView(request):
     ctx["opening_hours"] = {}
 
     if request.method == "POST":
-        match request.POST.get("method_tag"):
+        match request.POST.get("form_tag"):
             case "register":
                 ctx["store"] = create_pending_store(request.user)
             case "avatar":

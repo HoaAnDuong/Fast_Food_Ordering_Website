@@ -63,6 +63,7 @@ class Order(models.Model):
     delivery_status = models.ForeignKey(Delivery_Status,on_delete=models.DO_NOTHING,blank=True,null=True)
     payment_status = models.ForeignKey(Payment_Status,on_delete=models.DO_NOTHING,blank=True,null=True)
     order_status = models.ForeignKey(Order_Status,on_delete=models.DO_NOTHING,blank=True,null=True)
+    image = models.ImageField(default="orders/order.png",upload_to="orders")
     moderated = models.DateTimeField(blank=True, null=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -87,7 +88,7 @@ class Order(models.Model):
         order_products = self.order_products.all()
         store_list = []
         for i in order_products:
-            if not i.product.store in store_list:
+            if i.status.code != "cancelled" and not i.product.store in store_list:
                 store_list.append(i.product.store)
         return store_list
 
@@ -223,11 +224,21 @@ class Order(models.Model):
             "Bạn không thể thực hiện thay đổi trên đơn hàng này."
         )
         order_product = self.order_products.get(product=product)
+
+        quantity = order_product.quantity
+
         order_product.delete()
         self.logs.create(
-            log=f"{datetime.datetime.now()}: Đã xóa sản phẩm {product.name} ra khỏi giỏ hàng")
+            log=f"{datetime.datetime.now()}: Đã xóa sản phẩm {product.name} với số lượng {quantity} ra khỏi giỏ hàng")
+
+
         self.calculate_total()
 
+    def cancel_product(self, request):
+        order_product = self.order_products.get(product__id=request.POST.get("product_id"))
+        if order_product.status != "submitted":
+            raise ValidationError(f"Món ăn {order_product.product.name} không thể bị hủy")
+        order_product.status = Order_Product_Status.get(code="cancelled")
 
     def update_location(self,request):
         if self.order_status.code != "pending": raise ValidationError(
@@ -250,6 +261,8 @@ class Order(models.Model):
 
 
     def validate(self):
+        if self.total_quantity == 0:
+            raise ValidationError(f"Đơn hàng hiện tại chưa có món ăn nào")
         if len(self.store_list) > MAX_NUM_OF_STORES:
             raise ValidationError(f"Số cửa hàng được đặt tối đa là {MAX_NUM_OF_STORES}. Bạn đã đặt hàng trên {len(self.store_list)} cửa hàng")
 
@@ -260,11 +273,11 @@ class Order(models.Model):
                 raise ValidationError(f"Không thể đặt hàng từ Cửa hàng {store.name} - {store.location.address}")
             if distance(store.location, self.destination) > MAX_DISTANCE:
                 raise ValidationError(f"Khoảng cách từ vị trí đặt hàng đến cửa hàng {store.name} - {store.location.address} vượt quá {MAX_DISTANCE} km.")
-            # if not store.is_open:
-            #     raise ValidationError(f"Cửa hàng {store.name} - {store.location.address} hiện tại không mở cửa")
+            if not store.is_open:
+                raise ValidationError(f"Cửa hàng {store.name} - {store.location.address} hiện tại không mở cửa")
 
         if self.total_quantity > MAX_ORDER_PRODUCTS_COUNT:
-            raise ValidationError(f"Số lượng sản phẩm dược đặt không quá {MAX_ORDER_PRODUCTS_COUNT}")
+            raise ValidationError(f"Số lượng sản phẩm được đặt không quá {MAX_ORDER_PRODUCTS_COUNT}")
 
         for order_product in self.order_products.all():
             if order_product.product.status.code != "active":
@@ -307,7 +320,7 @@ class Order_Product(models.Model):
     order = models.ForeignKey(Order,on_delete=models.CASCADE,related_name="order_products")
     product = models.ForeignKey(Product,on_delete=models.SET_NULL,null=True,related_name="order_products")
     quantity = models.PositiveIntegerField()
-    image = models.ImageField(default='order_products.png', upload_to='order_products/')
+    image = models.ImageField(default='order_products/order_product.png', upload_to='order_products/')
     price = MoneyField(max_digits=256, decimal_places=2, default_currency='VND', default=0)
     total = MoneyField(max_digits=256, decimal_places=2, default_currency='VND', default=0)
     note = models.TextField(max_length=255,blank=True,null=True)
@@ -319,6 +332,8 @@ class Order_Product(models.Model):
         db_table = "Order_Product"
         verbose_name = "Order_Product"
         unique_together = ["order","product"]
+    def __str__(self):
+        return f"{self.product.name} {self.order.__str__()}"
 
 class Order_Log(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE,related_name="logs")

@@ -91,7 +91,7 @@
                 {% else %}
                     <form method = "POST">
                         {% csrf_token %}
-                        <input type="hidden" name="method_tag" value = "create_order" readonly>
+                        <input type="hidden" name="form_tag" value = "create_order" readonly>
                         <button class = "btn" style = "display: flex; justify-content: space-between;">Tạo Đơn Hàng Mới</button>
                     </form>
                 {% endif %}

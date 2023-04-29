@@ -32,9 +32,7 @@ var lngLatString = `${Math.round(lng.value * 100000) / 100000}, ${Math.round(lat
 location_marker.bindPopup(`<b>${lngLatString}</b><p>${address.value}</p>`);
 location_marker.openPopup();
 
-const apiKey = "AAPK5a1319c4648247188e709e0176c0a073pqXTy5i1h6UW8b2prBtWB59DSR7OsFx-2yGG0CpcSTeKcf8ZkrkMbg6EYLZ0p3VW";
 
-const authentication = arcgisRest.ApiKeyManager.fromKey(apiKey);
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

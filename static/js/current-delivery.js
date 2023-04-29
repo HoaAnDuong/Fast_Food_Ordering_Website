@@ -6,7 +6,7 @@ async function orderDataRefresh(){
     while(true){
         $.ajax({
             type:'GET',
-            url:'/current-order/get-data',
+            url:'/current-delivery/get-data',
             data:
             {
                 csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
@@ -32,11 +32,11 @@ async function orderDataRefresh(){
 
                 for(let i = 0; i < json.order_product.length;i++){
                     if(order_product_rows[i] != undefined){
-                        if(order_product_rows[i].cells[0].childNodes[0].innerHTML != json.order_product[i].name){
+                        if(order_product_rows[i].cells[0].innerHTML != json.order_product[i].name){
                             location.reload();
                         }
                         if(order_product_rows[i].cells[6].innerHTML != json.order_product[i].updated){
-                            order_product_rows[i].cells[0].innerHTML = `<a href = "/product/${json.order_product[i].slug}">${json.order_product[i].name}</a>`
+                            order_product_rows[i].cells[0].innerHTML = `${json.order_product[i].name}`
                             order_product_rows[i].cells[1].innerHTML = `<img style = "width:100px; height:62px;" src = "${json.order_product[i].image_url}">`
                             order_product_rows[i].cells[2].innerHTML = json.order_product[i].price;
                             order_product_rows[i].cells[3].innerHTML = json.order_product[i].quantity;

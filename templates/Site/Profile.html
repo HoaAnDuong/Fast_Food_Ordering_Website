@@ -18,7 +18,7 @@
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     <h3>Avatar</h3>
-                    <input type = "hidden" name = "method_tag" value = "avatar" readonly>
+                    <input type = "hidden" name = "form_tag" value = "avatar" readonly>
                     <div class = "form-group">
                         <img class = "avatar" src = "{{profile.avatar.url}}" style = "height: 100px; width: 100px;">
                     </div>
@@ -36,7 +36,7 @@
                 <form method = "POST" name="profile">
                     {% csrf_token %}
                     <h3>Thông tin cơ bản</h3>
-                    <input type = "hidden" name = "method_tag" value = "profile" readonly>
+                    <input type = "hidden" name = "form_tag" value = "profile" readonly>
                     <div class = "form-group">
                         <h4>Trạng thái:</h4>
                         <label>{{profile.status.code}}</label>
@@ -85,7 +85,7 @@
             <div class = "tab-pane fade" id = "location">
                 <form method = "POST">
                     {% csrf_token %}
-                    <input type = "hidden" name = "method_tag" value = "location" readonly>
+                    <input type = "hidden" name = "form_tag" value = "location" readonly>
                     <div>
                         <h3>Vị trí:<br></h3>
                         <label>Vĩ độ</label>
@@ -102,16 +102,16 @@
                     </div>
 
                     <div>
-                        <input type = "text" id="country" name="country" value = "{{profile.location.country}}" readonly>
+                        <input type = "hidden" id="country" name="country" value = "{{profile.location.country}}" readonly>
                     </div>
                     <div>
-                        <input type = "text" id="region" name="region" value = "{{profile.location.region}}" readonly>
+                        <input type = "hidden" id="region" name="region" value = "{{profile.location.region}}" readonly>
                     </div>
                     <div>
-                        <input type = "text" id="subregion_1" name="subregion_1" value = "{{profile.location.subregion_1}}" readonly>
+                        <input type = "hidden" id="subregion_1" name="subregion_1" value = "{{profile.location.subregion_1}}" readonly>
                     </div>
                     <div>
-                        <input type = "text" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
+                        <input type = "hidden" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
                     </div>
                     {% if error == "location" %}
                     {% for msg in messages %}

@@ -21,7 +21,7 @@ def CurrentOrderView(request):
 
         ctx["payment_methods"] = Payment_Method.objects.all()
         if request.method == "POST":
-            match request.POST.get("method_tag"):
+            match request.POST.get("form_tag"):
                 case "create_order":
                     if not hasattr(current_order,'delivery'):
                         Delivery.objects.create(order = current_order,status = Delivery_Status.objects.get(code="pending"))
@@ -53,6 +53,8 @@ def CurrentOrderView(request):
                         raise ValidationError("Bạn đã nhập sai mật khẩu")
                     if not hasattr(current_order,'delivery'):
                         Delivery.objects.create(order = current_order,status = Delivery_Status.objects.get(code="pending"))
+                    current_order.update_location(request)
+                    current_order.destination.save()
                     current_order.submit_order()
 
 
@@ -107,6 +109,13 @@ def GetCurrentOrderData(request):
                             "note":item.note
                         }
                         for item in current_order.order_products.all()
+                    ],
+                    "logs":[
+                        {
+                            "created":item.created.__str__(),
+                            "log":item.log
+                        }
+                        for item in current_order.logs.all()
                     ]
                 }
                 return HttpResponse(json.dumps(ctx,indent=4),status=200)
@@ -121,7 +130,7 @@ def DelivererCurrentLocation(request):
     if request.method == 'GET':
         if not request.user.is_anonymous:
             current_order = request.user.profile.current_order
-            if current_order and current_order.order_status.code == "submitted":
+            if current_order:
                 deliverer = current_order.delivery.deliverer
                 ctx = {
                     "is_active": deliverer.is_active,

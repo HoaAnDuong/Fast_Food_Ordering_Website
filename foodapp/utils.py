@@ -1,9 +1,10 @@
 from foodapp.settings import MEDIA_ROOT
 import os
 import datetime
-
+from PIL import Image
 
 def avatar_change(subfolders,instance,file):
+    img = Image.open(file) #check if file is image file
     if file.size > 5e+7: raise ImportError("Kích thước hình ảnh quá lớn")
     dir = ""
     file_name = file.__str__().split(".")
@@ -23,11 +24,11 @@ def avatar_change(subfolders,instance,file):
             for chunk in file.chunks():
                 destination.write(chunk)
         dir = f"{subfolders}/"
-    os.remove(os.path.join(MEDIA_ROOT, instance.avatar.__str__().replace("/","//")))
     instance.avatar = f"{dir}/{file_name}"
     instance.save()
 
 def image_upload(subfolders,instance,file):
+    img = Image.open(file) #check if file is image file
     if file.size > 5e+7: raise ImportError("Kích thước hình ảnh quá lớn")
     dir = ""
     file_name = file.__str__().split(".")
@@ -47,6 +48,5 @@ def image_upload(subfolders,instance,file):
             for chunk in file.chunks():
                 destination.write(chunk)
         dir = f"{subfolders}/"
-    os.remove(os.path.join(MEDIA_ROOT, instance.image.__str__().replace("/","//")))
     instance.image = f"{dir}/{file_name}"
     instance.save()

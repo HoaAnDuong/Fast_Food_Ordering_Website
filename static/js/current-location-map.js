@@ -12,15 +12,27 @@ L.tileLayer('http://mt1.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
 
 var locationTab = document.getElementById('deliverer-profile');
 var observer1 = new MutationObserver(function(){
-  map.invalidateSize();
+  current_location_map.invalidateSize();
 });
 
-var current_location_marker = L.marker([lat.value,lng.value])
+observer1.observe(locationTab, {attributes: true});
+
+var delivererIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+
+var current_location_marker = L.marker([lat.value,lng.value],{icon: delivererIcon})
 
 current_location_marker.addTo(current_location_map)
 
 var current_lngLatString = `${Math.round(lng.value * 100000) / 100000}, ${Math.round(lat.value * 100000) / 100000}`;
-current_location_marker.bindPopup(`<b>${lngLatString}</b><p>${address.value}</p>`);
+current_location_marker.bindPopup(`<b>${lngLatString}</b><br><b>Vị trí hiện tại</b>`);
 current_location_marker.openPopup();
 
 //function reverseGeocoderHandlerCurrentLocation(error,result){
@@ -31,7 +43,7 @@ current_location_marker.openPopup();
 //        current_location_marker.bindPopup(`<b>${lngLatString}</b><p>${result.address.LongLabel}</p>`);
 //        current_location_marker.openPopup();
 //    }
-}
+//}
 
 
 
@@ -64,13 +76,22 @@ function changeCurrentLocationMarker(){
     current_location_marker.bindPopup(`<b>${lngLatString}</b>`);
 };
 
-var observer = new MutationObserver(function(mutations, observer) {
+var current_lat_observer = new MutationObserver(function(mutations, observer) {
     console.log(mutations)
-    $(timestamp).trigger("change");
+    $(current_lat).trigger("change");
 });
-observer.observe(timestamp, {
+current_lat_observer.observe(current_lng, {
     attributes: true
 });
-$(timestamp).change(changeCurrentLocationMarker);
+$(current_lat).change(changeCurrentLocationMarker);
+
+var current_lng_observer = new MutationObserver(function(mutations, observer) {
+    console.log(mutations)
+    $(current_lng).trigger("change");
+});
+current_lng_observer.observe(current_lng, {
+    attributes: true
+});
+$(current_lng).change(changeCurrentLocationMarker);
 
 changeCurrentLocationMarker();

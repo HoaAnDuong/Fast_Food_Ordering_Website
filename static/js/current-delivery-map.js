@@ -7,12 +7,10 @@ const start_lng = document.getElementById("start_lng")
 const destination_lat = document.getElementById("destination_lat")
 const destination_lng = document.getElementById("destination_lng")
 const destination_address = document.getElementById("destination_address")
-const deliverer_lat = document.getElementById("deliverer_lat")
-const deliverer_lng = document.getElementById("deliverer_lng")
+const deliverer_lat = document.getElementById("current_lat")
+const deliverer_lng = document.getElementById("current_lng")
 
-const apiKey = "AAPK5a1319c4648247188e709e0176c0a073pqXTy5i1h6UW8b2prBtWB59DSR7OsFx-2yGG0CpcSTeKcf8ZkrkMbg6EYLZ0p3VW";
 
-const authentication = arcgisRest.ApiKeyManager.fromKey(apiKey);
 
 //Map
 var map = L.map('map').setView([destination_lat.value,destination_lng.value], 15);
@@ -81,7 +79,7 @@ var start_marker = L.marker(start_latLng,{icon: startIcon})
 start_marker.addTo(map)
 
 var lngLatString = `${Math.round(start_lng.value * 100000) / 100000}, ${Math.round(start_lat.value * 100000) / 100000}`;
-start_marker.bindPopup(`<b>${lngLatString}</b>`);
+start_marker.bindPopup(`<b>${lngLatString}</b><br><b>Điểm bắt đầu</b>`);
 start_marker.openPopup();
 
 
@@ -91,7 +89,7 @@ var destination_marker = L.marker(destination_latLng,{icon: destinationIcon})
 destination_marker.addTo(map)
 
 lngLatString = `${Math.round(destination_lat.value * 100000) / 100000}, ${Math.round(destination_lng.value * 100000) / 100000}`;
-destination_marker.bindPopup(`<b>${lngLatString}</b><p>${destination_address.value}</p>`);
+destination_marker.bindPopup(`<b>${lngLatString}</b><br><b>Điểm giao hàng</b><p>${destination_address.value}</p>`);
 destination_marker.openPopup();
 
 deliverer_latLng = L.latLng([deliverer_lat.value,deliverer_lng.value])
@@ -100,8 +98,10 @@ var deliverer_marker = L.marker(deliverer_latLng,{icon: delivererIcon})
 deliverer_marker.addTo(map)
 
 lngLatString = `${Math.round(deliverer_lat.value * 100000) / 100000}, ${Math.round(deliverer_lng.value * 100000) / 100000}`;
-deliverer_marker.bindPopup(`<b>${lngLatString}</b>`);
+deliverer_marker.bindPopup(`<b>${lngLatString}</b><br><b>Vị trí người giao hàng</b>`);
 deliverer_marker.openPopup();
+
+csrfmiddlewaretoken = $('input[name=csrfmiddlewaretoken]').val()
 
 for(let i = 0;i<num_points.value;i++){
     let point_lat = document.getElementById(`point_${i}_lat`);
@@ -117,10 +117,18 @@ for (let i=0;i < num_of_store.value;i++){
     store_lng = document.getElementById(`store_${i}_lng`);
     store_address = document.getElementById(`store_${i}_address`);
     store_name = document.getElementById(`store_${i}_name`);
+    store_id = document.getElementById(`store_${i}_id`);
     store_marker = L.marker([store_lat.value,store_lng.value],{icon: storeIcon});
     store_marker.addTo(map);
     lngLatString = `${Math.round(store_lng.value * 100000) / 100000}, ${Math.round(store_lat.value * 100000) / 100000}`;
-    store_marker.bindPopup(`<b>${lngLatString}</b><br><b>${store_name.innerHTML}</b><p>${store_address.value}</p>`);
+    store_marker.bindPopup(`<b>${lngLatString}</b>
+                            <br>
+                            <b>${store_name.innerHTML}</b>
+                            <p>${store_address.value}</p>
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#store_${i}_modal">
+                                Nhận món
+                            </button>
+                            `);
     store_marker.openPopup();
 }
 
@@ -184,31 +192,32 @@ router.then((response) => {
         alert("There was a problem using the route service. See the console for details.");
 });
 
-async function delivererLocationRefresh(){
-    while(true){
-        $.ajax({
-            type:'GET',
-            url:'/current-order/deliverer-location',
-            data:
-            {
-                csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
-            },
-            success: function(data){
-               let json = $.parseJSON(data);
-               console.log(json);
-               deliverer_marker.setLatLng([json.deliverer_lat,json.deliverer_lng]);
-               deliverer_lat.value = json.deliverer_lat
-               deliverer_lng.value = json.deliverer_lng
-            },
-            error: function(data){
-               let json = $.parseJSON(data);
-               console.log(json);
-            }
-        });
-        await sleep(2000);
-    }
-}
 
-delivererLocationRefresh();
+function changeCurrentLocationMarker(){
+
+    var latlng = L.latLng({lat:current_lat.value,
+                            lng:current_lng.value});
+    deliverer_marker.setLatLng(latlng)
+    lngLatString = `${Math.round(latlng.lng * 100000) / 100000}, ${Math.round(latlng.lat * 100000) / 100000}`;
+    deliverer_marker.bindPopup(`<b>${lngLatString}</b><br><b>Vị trí người giao hàng</b>`);
+};
+
+var current_lat_observer = new MutationObserver(function(mutations, observer) {
+    console.log(mutations)
+    $(current_lat).trigger("change");
+});
+current_lat_observer.observe(current_lng, {
+    attributes: true
+});
+$(current_lat).change(changeCurrentLocationMarker);
+
+var current_lng_observer = new MutationObserver(function(mutations, observer) {
+    console.log(mutations)
+    $(current_lng).trigger("change");
+});
+current_lng_observer.observe(current_lng, {
+    attributes: true
+});
+$(current_lng).change(changeCurrentLocationMarker);
 
 

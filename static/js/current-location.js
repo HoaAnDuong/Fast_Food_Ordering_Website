@@ -36,6 +36,14 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
+async function currentLocationRefresh(){
+    while(true){
+        navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+        await sleep(5000);
+    }
+};
+
 $(document).on('submit','#current-location-form',function(e){
 e.preventDefault();
 $.ajax({
@@ -47,12 +55,7 @@ $.ajax({
         current_lng:$("#current_lng").val(),
         csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
     }
-    })
+    });
 });
-async function currentLocationRefresh(){
-    while(true){
-        navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
-        await sleep(2000);
-    }
-};
+
 currentLocationRefresh();

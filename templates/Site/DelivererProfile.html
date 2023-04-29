@@ -5,7 +5,7 @@
             {% if deliverer_profile %}
                 <ul class="nav nav-tabs">
                   <li class="active"><a href="/deliverer-profile">Thông tin Người giao hàng</a></li>
-                  <li><a href="/current-delivery">Đơn hàng hiện tại</a></li>
+                  <li><a href="/current-delivery">Đơn vận chuyển hiện tại</a></li>
                 </ul>
                 <br>
                 <ul class="col-md-2 nav nav-pills nav-stacked">
@@ -18,7 +18,7 @@
                         <form method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
                             <h3>Avatar</h3>
-                            <input type = "hidden" name = "method_tag" value = "avatar" readonly>
+                            <input type = "hidden" name = "form_tag" value = "avatar" readonly>
                             <div class = "form-group">
                                 <img class = "avatar" src = "{{profile.avatar.url}}" style = "height: 100px; width: 100px;">
                             </div>
@@ -37,7 +37,7 @@
                         <form method = "POST" name="profile">
                             {% csrf_token %}
                             <h3>Thông tin cơ bản</h3>
-                            <input type = "hidden" name = "method_tag" value = "profile" readonly>
+                            <input type = "hidden" name = "form_tag" value = "profile" readonly>
                             <div class = "form-group">
                                 <label>Trạng thái:</label>
                                 <label>{{profile.status.code}}</label>
@@ -87,7 +87,7 @@
 
                         <form method = "POST">
                             {% csrf_token %}
-                            <input type = "hidden" name = "method_tag" value = "location" readonly>
+                            <input type = "hidden" name = "form_tag" value = "location" readonly>
                             <div>
                                 <h3>Vị trí:<br></h3>
                                 <label>Vĩ độ</label>
@@ -100,20 +100,20 @@
                             <div>
                                 <label>Địa chỉ</label>
                                 <br>
-                                <input type = "text" id="address" name="address" value = "{{profile.location.address}}" style="width: 50vw;">
+                                <input type = "text" id="address" name="address" value = "{{profile.location.address}}" style="width: 60vw;">
                             </div>
 
                             <div>
-                                <input type = "text" id="country" name="country" value = "{{profile.location.country}}" readonly>
+                                <input type = "hidden" id="country" name="country" value = "{{profile.location.country}}" readonly>
                             </div>
                             <div>
-                                <input type = "text" id="region" name="region" value = "{{profile.location.region}}" readonly>
+                                <input type = "hidden" id="region" name="region" value = "{{profile.location.region}}" readonly>
                             </div>
                             <div>
-                                <input type = "text" id="subregion_1" name="subregion_1" value = "{{profile.location.subregion_1}}" readonly>
+                                <input type = "hidden" id="subregion_1" name="subregion_1" value = "{{profile.location.subregion_1}}" readonly>
                             </div>
                             <div>
-                                <input type = "text" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
+                                <input type = "hidden" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
                             </div>
                             <div id = "map" style = "height:80vh; width:80vw; "></div>
 
@@ -126,11 +126,11 @@
                             <button type="submit" class="btn btn-primary">Xác nhận</button>
                         </form>
                     </div>
-                    <div class = "tab-pane fade in active" id = "deliverer-profile">
-                        <form>
+                    <div class = "tab-pane fade" id = "deliverer-profile">
+                        <form method = "POST">
                             {% csrf_token %}
                             <h3>Thông tin Người Giao Hàng</h3>
-                            <input type = "hidden" name = "method_tag" value = "deliverer-profile" readonly>
+                            <input type = "hidden" name = "form_tag" value = "deliverer_profile" readonly>
                             <div class = "form-group">
                                 <div>
                                     <label>Lần hoạt động gần nhất:</label>
@@ -151,8 +151,48 @@
                                     <label>Giấy phép lái xe<br></label>
                                     <input type = "text" name = "driver_license" value = "{% if deliverer_profile.driver_license %}{{deliverer_profile.driver_license}}{% endif %}">
                                 </div>
+                                <button type="submit" class="btn btn-primary">Xác nhận</button>
                             </div>
                         </form>
+                        <h3>Giờ làm việc hôm nay</h3>
+                        <div>
+                            <label>Giờ bắt đầu: {{deliverer_profile.start_time}}</label>
+                        </div>
+                        <div>
+                            <label>Giờ kết thúc: {{deliverer_profile.end_time}}</label>
+                        </div>
+
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#update_end_time_modal">
+                            Chỉnh sửa
+                        </button>
+                        <div id = "update_end_time_modal" class = "modal fade in" role="dialog">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title">
+                                            Chỉnh giờ làm việc
+                                        </h4>
+                                    </div>
+                                    <div class = "modal-body">
+                                        <form method = "POST">
+                                            {% csrf_token %}
+                                            <input type = "hidden" name = "form_tag" value = "update_end_time">
+                                            <div><h3>Chọn giờ làm việc cho hôm nay</h3></div>
+                                            <div><label>Bắt đầu: </label><label style="color:green"> Hiện tại</label></div>
+                                            <div>
+                                                <label>Kết thúc</label>
+                                                <input type = "time" id = "end_time" name = "end_time">
+                                            </div>
+                                            <div>
+                                                <h5>Lưu ý: Giờ làm việc có thể được chỉnh sửa trong trang Thông tin Người giao hàng</h5>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Xác nhận</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <form>
                             <h3>Vị trí hiện tại</h3>
                             <div id = "current_location_map" style = "height:80vh; width:80vw; "></div>
@@ -162,8 +202,6 @@
                                 <br>
                             {% endfor %}
                             {% endif %}
-
-
                         </form>
                     </div>
 
@@ -187,7 +225,7 @@
                 <div class = "col-md-6 p-4 text-center form-default">
                     <form method = "POST">
                         {% csrf_token %}
-                        <input type = "hidden" name = "method_tag" value = "register" readonly>
+                        <input type = "hidden" name = "form_tag" value = "register" readonly>
                         <div class="modal-content">
                             <div class="modal-header">
                                 <label>Đăng ký cửa hàng</label>
@@ -197,9 +235,7 @@
                                 <h4>Lưu ý:</h4>
                                 <h5>- Bạn chỉ có thể đăng ký và hoạt động ở 1 trong 2 vai trò: Chủ cửa hàng hoặc Người giao hàng.</h5>
                                 <h5>- Khi nhấn nút Đăng ký, bạn cần phải điền đầy đủ thông tin để Quản trị viên xét duyệt Cửa hàng của bạn.</h5>
-                                <h5>- Việc đăng ký hoạt động với vai trò Người Giao Hàng sẽ không xóa vai trò Khách Hàng của bạn </h5>
-                                <h5>(Bạn có thể xóa vai trò Khách Hàng ở 1 trang khác nếu bạn là Chủ cửa hàng hoặc Người giao hàng)</h5>
-
+                                <h5>- Việc đăng ký hoạt động với vai trò Người Giao Hàng sẽ xóa vai trò Khách Hàng của bạn </h5>
                                 <button type="submit" class="btn btn-default">Xác nhận</button>
                                 <a href ="/">
                                     <button type = "button" class = "btn btn-default">Hủy</button>

@@ -19,7 +19,7 @@
                         <form method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
                             <h3>Avatar</h3>
-                            <input type = "hidden" name = "method_tag" value = "avatar" readonly>
+                            <input type = "hidden" name = "form_tag" value = "avatar" readonly>
                             <div class = "form-group">
                                 <img class = "store-avatar" src = "{{store.avatar.url}}">
                             </div>
@@ -37,7 +37,7 @@
                         <form method = "POST" name="profile">
                             {% csrf_token %}
                             <h3>Profile</h3>
-                            <input type = "hidden" name = "method_tag" value = "store" readonly>
+                            <input type = "hidden" name = "form_tag" value = "store" readonly>
                             <div class = "form-group">
                                 <h4>Trạng thái:</h4>
                                 <label>{{store.status.code}}</label>
@@ -70,33 +70,33 @@
                     <div class = "tab-pane fade" id = "location">
                         <form method = "POST">
                             {% csrf_token %}
-                            <input type = "hidden" name = "method_tag" value = "location" readonly>
+                            <input type = "hidden" name = "form_tag" value = "location" readonly>
                             <div>
                                 <h3>Vị trí:<br></h3>
                                 <label>Vĩ độ</label>
-                                <input type = "text" id="lat" name="lat" value = {{store.location.lat}} readonly>
+                                <input type = "text" id="lat" name="lat" value = {{profile.location.lat}} readonly>
                             </div>
                             <div>
                                 <label>Kinh độ</label>
-                                <input type = "text" id="lng" name="lng" value = {{store.location.lng}} readonly>
+                                <input type = "text" id="lng" name="lng" value = {{profile.location.lng}} readonly>
                             </div>
                             <div>
                                 <label>Địa chỉ</label>
                                 <br>
-                                <input type = "text" id="address" name="address" value = "{{store.location.address}}" style="width: 50vw">
+                                <input type = "text" id="address" name="address" value = "{{profile.location.address}}" style="width: 60vw;">
                             </div>
 
                             <div>
-                                <input type = "hidden" id="country" name="country" value = "{{store.location.country}}" readonly>
+                                <input type = "hidden" id="country" name="country" value = "{{profile.location.country}}" readonly>
                             </div>
                             <div>
-                                <input type = "hidden" id="region" name="region" value = "{{store.location.region}}" readonly>
+                                <input type = "hidden" id="region" name="region" value = "{{profile.location.region}}" readonly>
                             </div>
                             <div>
-                                <input type = "hidden" id="subregion_1" name="subregion_1" value = "{{store.location.subregion_1}}" readonly>
+                                <input type = "hidden" id="subregion_1" name="subregion_1" value = "{{profile.location.subregion_1}}" readonly>
                             </div>
                             <div>
-                                <input type = "hidden" id="subregion_2" name="subregion_2" value = "{{store.location.subregion_2}}" readonly>
+                                <input type = "hidden" id="subregion_2" name="subregion_2" value = "{{profile.location.subregion_2}}" readonly>
                             </div>
                             <div id = "map" style = "height:80vh; width:80vw; "></div>
                             {% if error == "location" %}
@@ -120,7 +120,7 @@
                                     </div>
                                     <form method = "POST">
                                         {% csrf_token %}
-                                        <input type = "hidden" name = "method_tag" value = "opening_hours_all" readonly>
+                                        <input type = "hidden" name = "form_tag" value = "opening_hours_all" readonly>
                                         <div class="modal-body">
                                             <div style = "display: flex;align-items: center;width:500px;">
                                                 <label style = "margin-right:10px;">Giờ mở cửa</label>
@@ -140,7 +140,7 @@
 
                         <form method = "POST">
                             {% csrf_token %}
-                            <input type = "hidden" name = "method_tag" value = "opening_hours" readonly>
+                            <input type = "hidden" name = "form_tag" value = "opening_hours" readonly>
                             <div>
                                 <h4>Thứ hai:<br></h4>
                                 <div style = "display: flex;align-items: center;width:500px;">
@@ -221,7 +221,7 @@
                 <div class = "col-md-6 p-4 text-center form-default">
                     <form method = "POST">
                         {% csrf_token %}
-                        <input type = "hidden" name = "method_tag" value = "register" readonly>
+                        <input type = "hidden" name = "form_tag" value = "register" readonly>
                         <div class="modal-content">
                             <div class="modal-header">
                                 <label>Đăng ký cửa hàng</label>

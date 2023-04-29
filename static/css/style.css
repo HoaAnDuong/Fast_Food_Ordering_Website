@@ -20,6 +20,8 @@ html{
     height: 12vw;
 }
 
+
+
 .user-nav{
     float:right;
 }
@@ -106,6 +108,8 @@ html{
     width: 100px;
     height: 62px;
 }
-
+.modal-dialog{
+    width: 50vw;
+}
 
 

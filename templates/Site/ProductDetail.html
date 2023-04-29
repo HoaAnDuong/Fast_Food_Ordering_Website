@@ -46,7 +46,7 @@
                                         </div>
                                         <form method = "POST">
                                                 {% csrf_token %}
-                                                <input type = "hidden" name = "method_tag" value = "{% if not order_product %}add_product{% else %}update_product{% endif %}" readonly>
+                                                <input type = "hidden" name = "form_tag" value = "{% if not order_product %}add_product{% else %}update_product{% endif %}" readonly>
                                                 <div class="modal-body">
                                                     <div class = "form-group">
                                                         <label>Số Lượng</label>
@@ -56,7 +56,7 @@
                                                     <div class = "form-group">
                                                         <label style = "display: flex">Ghi chú</label>
                                                         <br>
-                                                        <textarea name = "note" style = "width:500px; height:250px" maxlength="255"></textarea>
+                                                        <textarea name = "note" style = "width:40vw; height:25vh" maxlength="255"></textarea>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
@@ -98,7 +98,7 @@
                                         <form method = "POST">
                                             {% csrf_token %}
                                                 <div class = "modal-body">
-                                                   <input type = "hidden" name = "method_tag" value = "delete_product" readonly>
+                                                   <input type = "hidden" name = "form_tag" value = "delete_product" readonly>
 
                                                     <h4>Bạn có chắc chắn muốn xóa {{product.name}} với số lượng {{order_product.quantity}} ra khỏi giỏ hàng?</h4>
 
