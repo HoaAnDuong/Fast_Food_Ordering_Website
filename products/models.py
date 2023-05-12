@@ -4,6 +4,9 @@ from stores.models import Store
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
+from django.db import transaction
+from foodapp.utils import image_upload
+from django.db.models import Avg,Count
 
 # Create your models here.
 
@@ -51,26 +54,65 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def average_rating(self):
+        average_rating = self.reviews.aggregate(Avg("rating"),Count('author'))
+        return average_rating
+
     def get_absolute_url(self):
         return reverse("product", kwargs={"slug": self.slug})
+
+    def make_review(self,request):
+        user = request.user
+        if not request.user.profile.purchased_product(self):
+            raise ValidationError(f"Bạn chưa đặt món {self.name}, nên chưa thể viết bài đánh giá.")
+        rating = float(request.POST.get('rating'))
+        title = request.POST.get('title')
+        review_content = request.POST.get('review')
+        image = request.FILES.get('image')
+        print(image)
+        try:
+            with transaction.atomic():
+                review = Product_Review.objects.get(product=self,author=user)
+                review.rating = rating
+                review.title = title
+                review.review = review_content
+
+        except:
+            review = Product_Review.objects.create(product=self,author=user,
+                                                   rating=rating,title=title,review=review_content)
+        if image != None:
+            image_upload('reviews', review, image)
+        review.save()
+
+
+
+
 
 class Product_Review(models.Model):
     product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name="reviews")
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.FloatField(default=0)
-    review = models.TextField(blank=True)
-    images = models.ImageField(upload_to='reviews/',null=True)
+    title = models.TextField(blank=True,max_length=128)
+    review = models.TextField(blank=True,max_length=2048)
+    image = models.ImageField(upload_to='reviews/',null=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "Product_Review"
         verbose_name = "Product_Review"
+        unique_together = ["product","author"]
+
+    @property
+    def is_updated(self):
+        return self.created != self.updated
 
 class Product_Report(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE,related_name="reports")
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    report = models.TextField()
+    title = models.TextField(blank=True, max_length=128)
+    report = models.TextField(max_length=2048)
     images = models.ImageField(upload_to='reports/', null=True)
     created = models.DateTimeField(auto_now_add=True)
 

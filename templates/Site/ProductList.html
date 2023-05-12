@@ -5,58 +5,91 @@
     <div class = "container-fluid">
         <ul class="pagination" style = "display:flex;">
             {% for i in page_range %}
-            <li {% if page.number == i %}class="active"{% endif %}><a href = "/product-list/{{i}}">{{i}}</a></li>
+            <li {% if page.number == i %}class="active"{% endif %}><a href = "/product-list{% if search_keyword %}/search-keyword/{{search_keyword}}{% endif %}/{{i}}">{{i}}</a></li>
             {% endfor %}
         </ul>
         <hr>
+        {% if search_keyword %}
+        <h4>Kết quả tìm kiếm cho {{search_keyword}} ({{search_count}} kết quả)</h4>
+        {% endif %}
         <div class = "row">
 
-            {% if user.is_authenticated %}
-            <div class = "col-md-8">
-            {% else %}
+
             <div class = "col-md-12">
-            {% endif %}
-                <div class = "row">
+                <div class = "row" style="margin-bottom:20px">
                 {% for p in page.object_list %}
 
-                    <div class = "col-md-3 product-card">
-                        <img class = 'product-image' src="{{ p.image.url }}">
-                        <a href = "/product/{{ p.slug }}"><h4 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{ p.name }}</h4></a>
-                        <h5>{{ p.store.name }}</h5>
-                        <h5 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{p.store.location.address}}</h5>
-                        {% if p.distance %}
-                            <h5>{{ p.distance }}km</h5>
-                        {% endif %}
-                        {% if p.store.is_open %}
-                            <h5 style="color:green">Mở cửa</h5>
-                        {% endif %}
-                        <h5>{{ p.price }}</h5>
+                    {% if forloop.counter0|divisibleby:"5" %}
                     </div>
+                    <div class = "row" style="margin-bottom:20px">
+                    {% endif %}
+
+                    <div class = "col-md-2 product-card" style="margin:20px">
+                        <div style = "border-style:solid; border-width: thin; width: 202px;">
+                            <img class = 'product-image' src="{{ p.image.url }}">
+                        </div>
+                        <div style = "border-style:solid; border-width: thin; width: 202px;">
+                            <a href = "/product/{{ p.slug }}"><h4 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{ p.name }}</h4></a>
+                        </div>
+                        <div style = "border-style:solid; border-width: thin; width: 202px;">
+                            <input id="rating_product_{{forloop.counter0}}" type="text" name = "rating" value = "{% if p.average_rating.rating__avg %}{{p.average_rating.rating__avg}}{% else %}0{% endif %}">
+                            <script>
+                                $("#rating_product_{{forloop.counter0}}").rating({min:0, max:5, step:0.5,
+                                                                         size:'sm',starCaptions:(val)=>{return `${val} ({% if p.average_rating.author__count %}{{p.average_rating.author__count}}{% else %}0{% endif %} lượt đánh giá)`},
+                                                                         displayOnly:true});
+                            </script>
+                        </div>
+                        <div style = "border-style:solid; border-width: thin; width: 202px;">
+                            <h5>{{ p.store.name }}</h5>
+                            <h5 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{p.store.location.address}}</h5>
+                            {% if p.distance %}
+                                <h5>{{ p.distance }}km</h5>
+                            {% endif %}
+                            {% if p.store.is_open %}
+                                <h5 style="color:green">Mở cửa</h5>
+                            {% endif %}
+                            <h5>{{ p.price }}</h5>
+                        </div>
+                    </div>
+
 
                 {% endfor %}
                 </div>
             </div>
-            {% if user.is_authenticated %}
-            <div class = "col-md-2  current-order-form">
+            {% if user.profile.current_order and false %}
+            <div class = "col current-order-form" style = "width: 32vw">
                 {% if current_order %}
                     <form method = "POST">
                         {% csrf_token %}
                         <h2>Đơn hàng hiện tại</h2>
                         <h4>Giỏ hàng({{current_order.total_quantity}}):</h4>
-                        {% for order_product in current_order.order_products.all %}
-                        <div class = "order-product">
-                            <a href = "/product/{{order_product.product.slug}}"><h5>{{order_product.product.name}}</h5></a>
-                            <img class = "order-product-image" src = "{{order_product.product.image.url}}">
-                            <br>
-                            <label>Đơn Giá:{{order_product.product.price}}</label>
-                            <br>
-                            <label>Số Lượng:{{order_product.quantity}}</label>
-                            <br>
-                            <label>Giá:{{order_product.price}}</label>
-                            <br>
+                        <table class = "table table-hover" style = "width:8vw;">
+                            <thead>
+                                <tr>
+                                    <th>Tên</th>
+                                    <th>Hình ảnh</th>
+                                    <th>Đơn giá</th>
+                                    <th>Số Lượng</th>
+                                    <th>Tổng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
 
-                        </div>
-                        {% endfor %}
+                            {% for order_product in current_order.order_products.all %}
+                                <tr>
+
+                                    <td>
+                                        <a href = "/product/{{order_product.product.slug}}"><h5>{{order_product.product.name}}</h5></a>
+                                    </td>
+                                    <td>
+                                        <img class = "order-product-image" src = "{{order_product.product.image.url}}">
+                                    </td>
+                                    <td>{{order_product.price}}</td>
+                                    <td>{{order_product.quantity}}</td>
+                                    <td>{{order_product.total}}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
                         <h4>Danh Sách Cửa Hàng:</h4>
                         <input type = "hidden" id="destination_lat" value = {{current_order.destination.lat}}>
                         <input type = "hidden" id="destination_lng" value = {{current_order.destination.lng}}>

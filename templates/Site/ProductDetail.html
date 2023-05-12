@@ -4,13 +4,15 @@
 
     <div class = "container-fluid">
         <div class = "row">
-            <div class = "col" style = "width: 30vw">
-                <div class = "row product-detail">
-                    <div class = "col group-body">
-                        <img class = 'product-image-2' src="{{ product.image.url }}">
+            <div class = "col" style = "margin-left:5vw">
+                <div class = "row product-section" style = "width:80vw; left:5vw">
+                    <div class = "col group-body" style="padding-right:10px;">
+                        <img class = 'product-image-2' src="{{ product.image.url }}" style="position:relative;top:20%">
                     </div>
-                    <div class = "col group-body" style = "width: 80vw">
+                    <div class = "col group-body" style = "width: 80vw; padding-right:10px;">
                         <h2>{{ product.name }}</h2>
+
+                        <h3>{{product.store.name}}</h3>
                         <h5>{{ product.store.location.address}}</h5>
                         {% if product.store.is_open %}
                             <h4 style="color:green">Mở cửa</h4>
@@ -22,7 +24,13 @@
                             <br>
                         {% endfor %}
                         {% endif %}
-                        <button type="button" class="btn" data-toggle="modal" data-target="#order_product_modal">
+                        <input id="average_rating" type="text" name = "rating" value = "{% if average_rating.rating__avg %}{{average_rating.rating__avg}}{% else %}0{% endif %}">
+                        <script>
+                            $("#average_rating").rating({min:0, max:5, step:0.5,
+                                                                     size:'md',starCaptions:(val)=>{return `${val} (Dựa trên {% if average_rating.author__count %}{{average_rating.author__count}}{% else %}0{% endif %} lượt đánh giá)`},
+                                                                     displayOnly:true});
+                        </script>
+                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#order_product_modal">
                             {% if not order_product %}
                                 Đặt món
                             {% else %}
@@ -129,8 +137,178 @@
                         </div>
                         {% endif %}
                     </div>
+                </div>
+
+                <div class = "row product-section" style = "width:65vw; left:15vw;">
+                    <div style = "width:60vw; position:relative;">
+                        <h3>Đánh giá:</h3>
+                        <hr>
+                        {% if purchased_product %}
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#review_product_modal">Đánh giá</button>
+                        <div id = "review_product_modal" class = "modal fade" role="dialog" style="z-index:10000;">
+                            <div class="modal-dialog">
+                                {% if user.is_authenticated %}
+                                    {% if not order_product.product.store == user.store %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">
+                                                Đánh giá món: {{product.name}}
+                                            </h4>
+                                        </div>
+                                        <form></form>
+                                        <form></form>
+                                        <form method = "POST" enctype="multipart/form-data">
+                                            {% csrf_token %}
+                                                <div class = "modal-body">
+                                                    <input type = "hidden" name = "form_tag" value = "review_product" readonly>
+
+                                                    <div style = "display:flex;justify-content: flex-start;">
+                                                        <img src="{{ user.profile.avatar.url }}" class = "avatar" style = "margin-right:10px;">
+
+                                                        <div style="position: relative;bottom:20px;">
+                                                            <h3>{{user.profile.last_name}} {{user.profile.first_name}}</h3>
+                                                            <h5>{% if user_review %}{{user_review.updated}}{% else %}{% now "DATETIME_FORMAT"%}{% endif %}</h5>
+                                                            {% if user_review %}
+                                                                {% if user_review.is_updated%}
+                                                                <h5>Đã chỉnh sửa</h5>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+
+                                                    <hr style="margin:0px; position: relative;bottom:10px;">
+
+
+                                                    <h5>Điểm đánh giá</h5>
+                                                    <input id="user_rating" type="text" name = "rating" value = "{% if user_review %}{{user_review.rating}}{% else %}5{% endif %}">
+
+                                                    <hr style = "margin:0px; position: relative;bottom:10px;">
+
+                                                    <h5>Hình ảnh(Không bắt buộc):</h5>
+                                                    <input type="file" id = "rating_image_upload" name="image" accept="image/*"/>
+                                                    <img id = "rating_image" src = "{% if user_review %}{% if user_review.image %}{{user_review.image.url}}{% endif %}{% else %}#{% endif %}"
+                                                                                                    style = "{% if user_review.image %}width:30vw; height:18.54vw;{% endif %}">
+                                                    <h5>Tiêu đề</h5>
+                                                    <input type = "text" name = "title" value = "{% if user_review%}{{user_review.title}}{% endif %}" maxlength="128">
+
+                                                    <h5>Nội dung đánh giá</h5>
+                                                    <textarea name = "review" style = "width:30vw; height:18.54vw;" maxlength="2048">{% if user_review %}{{user_review.review}}{% endif %}</textarea>
+
+
+                                                    <script>
+                                                        $("#rating_image_upload").change(function() {
+                                                            input = this;
+                                                            if (input.files && input.files[0]) {
+                                                                var reader = new FileReader();
+                                                                reader.onload = function(e) {
+                                                                  $("#rating_image").attr('src', e.target.result);
+                                                                  $("#rating_image}").attr("style", "width:30vw; height:18.54vw;");
+                                                                }
+                                                                reader.readAsDataURL(input.files[0]);
+                                                            }
+                                                        });
+                                                        $("#user_rating").rating({min:0, max:5, step:0.5,
+                                                                                                 size:'md',starCaptions:(val)=>{return `${val}`},
+                                                                                                 displayOnly:false});
+                                                    </script>
+
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Đánh giá</button>
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                </div>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label>Bạn cần phải đăng nhập để mua hàng</label>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div style = "width:60vw; max-height:120vh; overflow: scroll;">
+                            {% if reviews|length == 0 %}
+                            <h4>Hiện tại chưa có bình luận nào cho sản phẩm này.</h4>
+                            {% endif %}
+                            {% for review in reviews %}
+                            <div style = "border-style:solid; border-width: thin; padding:10px; margin:10px">
+                                <div style = "display:flex;justify-content: flex-start;">
+                                    <img src="{{ review.author.profile.avatar.url }}" class = "avatar" style = "margin-right:10px;">
+
+                                    <div style="position: relative;bottom:20px;">
+                                        <h3>{{review.author.profile.last_name}} {{review.author.profile.first_name}}</h3>
+                                        <h5>{{review.updated}}</h5>
+                                        {% if review.is_updated%}
+                                            <h5>Đã chỉnh sửa</h5>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <hr style = "margin:0px; position: relative;bottom:10px;">
+
+                                <input id="rating_{{forloop.counter0}}" type="text" name = "rating" value = "{{review.rating}}">
+
+                                <hr style = "margin:0px; position: relative;bottom:10px;">
+
+                                <h5><b>{{review.title}}</b></h5>
+                                <h5>{{review.review}}</h5>
+                                <img src="{% if review.image %}{{review.image.url}}{% endif %}" style = "{% if review.image %}width:30vw; height:18.54vw;{% endif %}">
+
+                                <script>
+                                    $("#rating_{{forloop.counter0}}").rating({min:0, max:5, step:0.5,
+                                                                             size:'md',starCaptions:(val)=>{return `${val}`},
+                                                                             displayOnly:true});
+                                </script>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class = "row product-section" style = "width:65vw; left: 15vw; ">
+
+                    <div style = "position:relative;">
+                        <h3>Cửa hàng:</h3>
+                        <div style = "display: flex; justify-content: flex-start;">
+                            <img class="product-image-2" src = "{{product.store.avatar.url}}" style="">
+                            <div>
+                                <h2>{{product.store.name}}</h2>
+                                <h5>{{product.store.location.address}}</h5>
+                                {% if product.store.is_open %}
+                                    <h5 style="color:green">Mở cửa</h5>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <h4>Vị trí cửa hàng: </h4>
+                        <div id = "product_map" style="width:60vw; height:40vh;"></div>
+                        <input type="hidden" id = "store_lat" name="store_lat" value = {{product.store.location.lat}}>
+                        <input type="hidden" id = "store_lng" name="store_lng" value = {{product.store.location.lng}}>
+                        <input type="hidden" id = "store_address" name="store_address" value = "{{product.store.location.address}}">
+                        <input type="hidden" id = "store_name" name="store_address" value = "{{product.store.name}}">
+                        {% if user.profile.current_order %}
+                        <input type="hidden" id = "destination_lat" name="destination_lat" value = {{user.profile.current_order.destination.lat}}>
+                        <input type="hidden" id = "destination_lng" name="destination_lng" value = {{user.profile.current_order.destination.lng}}>
+                        <input type="hidden" id = "destination_address" name="destination_address" value = "{{user.profile.current_order.destination.address}}">
+                        {% endif %}
+                        {% load static %}
+                        <script src="{% static 'js/product-map.js' %}"></script>
+                    </div>
 
                 </div>
+
+
 
             </div>
         </div>

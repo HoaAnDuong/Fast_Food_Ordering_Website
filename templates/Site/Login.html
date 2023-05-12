@@ -23,7 +23,13 @@
                 </form>
             </div>
             {% else %}
-            <meta http-equiv="refresh" content="1; url='/'" />
+            {% if user.profile.is_deliverer %}
+                <meta http-equiv="refresh" content="1; url='/deliverer-profile'" />
+            {% elif user.profile.is_store_owner %}
+                <meta http-equiv="refresh" content="1; url='/current-store'" />
+            {% else %}
+                <meta http-equiv="refresh" content="1; url='/'" />
+            {% endif %}
             <div class = "col-md-6 p-4 text-center">
                 <h3>You are logging in now. You will be directed to Homepage</h3>
             </div>

@@ -1,1 +1,35 @@
 {% extends 'Site/index.html' %}
+{% block content %}
+    {% load static %}
+
+
+    <div class = "container-fluid" style = "margin:0px;padding:0px;">
+        <img src = "{% static 'background.webp' %}" style = "position:absolute; width:100vw; height:61.80vw;">
+        <div style = "position: relative;
+        transform: translate(-204px, 0);
+        left:50vw; top:10vw; z-index:10000">
+            <h2 style="color:white;">Đặt hàng nhanh chóng, giao hàng tận nơi</h2>
+            <div class = "center" style = "display: flex; justify-content: flex-start;">
+
+                <input id = "search_bar" type = "text" style = "height:36px; width:360px; text-align:center;" maxlength="128">
+                <button id = "search_button" style = "height:36px; width:48px; margin-right:25px; text-align:center;">
+                    <img src="{% static 'magnifying-glass-solid.svg' %}" style="height:20px; width:20px;">
+                </button>
+                <script>
+                      function search_product(){
+                            search_keyword = $("#search_bar").val();
+                            search_keyword = search_keyword === "" ? " " : search_keyword;
+                            window.location.replace(`/product-list/search_keyword/${search_keyword}/1`);
+                      };
+                      $("#search_button").click(search_product);
+                      $("#search_bar").keypress(function(e) {
+                          if (e.which == 13) {
+                            search_product();
+                          }
+                        });
+                </script>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

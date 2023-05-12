@@ -98,16 +98,17 @@ def CurrentDeliveryView(request):
     if not request.user.is_anonymous:
 
         current_delivery = request.user.deliverer_profile.current_delivery
-        current_order = current_delivery.order
-        ctx["current_order"] = current_order
-        if current_order:
+        if current_delivery:
+            current_order = current_delivery.order
+            ctx["current_order"] = current_order
             ctx["store_list"] = current_order.store_list
-
             for store in ctx["store_list"]:
                 store.order_products = current_order.order_products.filter(product__store=store,status__code="submitted")
                 store.total = 0
                 for order_product in store.order_products:
                     store.total += order_product.total
+        else:
+            current_order = None
         ctx["payment_methods"] = Payment_Method.objects.all()
 
         if request.method == "POST":
@@ -118,6 +119,10 @@ def CurrentDeliveryView(request):
                     current_delivery.get_store_products(request)
                 case "update_product_image":
                     current_delivery.update_product_image(request)
+                case "cancel_product":
+                    current_delivery.cancel_product(request)
+                case "cancel_store_products":
+                    current_delivery.cancel_store_products(request)
                 case "dispatch":
                     current_delivery.dispatch(request)
                 case "ghosted":
@@ -183,7 +188,6 @@ def GetCurrentDeliveryData(request):
                     ]
                 }
                 return HttpResponse(json.dumps(ctx,indent=4),status=200)
-
             return HttpResponse(status=400)
     else:
         return Http404()

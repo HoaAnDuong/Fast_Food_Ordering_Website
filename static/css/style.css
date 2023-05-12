@@ -2,6 +2,9 @@ html{
     font-family: Helvetica,Arial
 }
 
+
+
+
 .navbar-default{
     background-color: #FFD93D;
 }
@@ -11,6 +14,7 @@ html{
 }
 
 .product-image{
+
     width: 200px;
     height: 123px;
 }
@@ -70,6 +74,7 @@ html{
     right: 1%;
     width: auto;
     border-style:solid;
+    border-width: thin;
     horizontal-align:right;
     display: flex;
     justify-content: center;
@@ -79,24 +84,24 @@ html{
     padding-right: 20px;
 }
 
-.product-detail{
+.product-section{
     position: relative;
-    left: 25%;
-    width: 80vw;
+
     height: auto;
     border-style:solid;
+    border-width: thin;
     display: flex;
     justify-content: flex-start;
-    padding-bottom: 20px;
-    padding-top: 20px;
-    padding-left: 20px;
-    padding-right: 20px;
+    margin-bottom: 20px;
+    margin-right: 20px;
+    padding:10px;
 }
 
 .product-detail .group-body{
     display: block;
     justify-content: center;
     padding-right: 20px;
+
 }
 
 .order-product{
@@ -104,12 +109,12 @@ html{
     justify-content: center;
 }
 
-.order-product .order-product-image{
+.order-product-image{
     width: 100px;
     height: 62px;
 }
 .modal-dialog{
-    width: 50vw;
+    width: 60vw;
 }
 
 

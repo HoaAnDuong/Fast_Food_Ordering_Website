@@ -1,10 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import Q
 from locations.models import Location
-from products.models import Product
+from products.models import Product,Product_Review
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from djmoney.models.fields import MoneyField
-from foodapp.settings import MAX_ORDER_PRODUCTS_COUNT,MAX_DISTANCE,MAX_NUM_OF_STORES
+from foodapp.settings import MAX_ORDER_PRODUCTS_COUNT,MAX_DISTANCE,MAX_NUM_OF_STORES,MAX_MONTHLY_CANCELLATIONS
 from locations.utils import distance
 from itertools import permutations
 from djmoney.money import Money
@@ -106,6 +107,11 @@ class Order(models.Model):
                 return self.delivery.deliverer
         except:
             return None
+    @property
+    def is_cancellable(self):
+        return self.order_status.code == "submitted" and len(self.order_products.filter(status__code="delivering")) == 0 and self.customer.profile.remain_cancellations > 0
+
+
     def expire_check(self):
         created_date = self.created
         if created_date.date() < datetime.datetime.now().date():
@@ -196,7 +202,7 @@ class Order(models.Model):
             raise ValueError(f"Tổng số lượng hàng được đặt không thể vượt quá {MAX_ORDER_PRODUCTS_COUNT}")
 
     def update_product(self,product,quantity,note):
-        if self.order_status.code != "pending":
+        if self.order_status.code != "pending" and self.order_status.code != "submitted":
             raise ValidationError("Bạn không thể thực hiện thay đổi trên đơn hàng này.")
         if product.store == self.customer_store:
             raise ValidationError(f"Bạn không thể đặt món từ cửa hàng của chính mình")
@@ -229,16 +235,25 @@ class Order(models.Model):
 
         order_product.delete()
         self.logs.create(
-            log=f"{datetime.datetime.now()}: Đã xóa sản phẩm {product.name} với số lượng {quantity} ra khỏi giỏ hàng")
+            log=f"{datetime.datetime.now()}: Đã xóa món {product.name} với số lượng {quantity} ra khỏi giỏ hàng")
 
 
         self.calculate_total()
 
     def cancel_product(self, request):
-        order_product = self.order_products.get(product__id=request.POST.get("product_id"))
-        if order_product.status != "submitted":
-            raise ValidationError(f"Món ăn {order_product.product.name} không thể bị hủy")
-        order_product.status = Order_Product_Status.get(code="cancelled")
+
+        order_product = self.order_products.get(product__id = request.POST.get('product_id'))
+        order_product.cancel()
+        order_product.save()
+        self.logs.create(
+            log=f"{datetime.datetime.now()}: Món {order_product.product.name} với số lượng {order_product.quantity} đã bị hủy từ phía khách hàng")
+    def cancel_store_products(self,request):
+        order_products = self.order_products.get(product__store_id = request.POST.get('store_id'))
+        for order_product in order_products:
+            order_product.cancel()
+            order_product.save()
+            self.logs.create(
+                log=f"{datetime.datetime.now()}: Món {order_product.product.name} với số lượng {order_product.quantity} đã bị hủy từ phía khách hàng")
 
     def update_location(self,request):
         if self.order_status.code != "pending": raise ValidationError(
@@ -304,7 +319,33 @@ class Order(models.Model):
             self.save()
 
     def cancel_order(self):
-        pass
+        if self.order_status.code != "submitted":
+            raise ValidationError("Bạn không thể hủy đơn hàng này. Lý do: Đơn hàng đang không ở trong trạng thái giao hàng")
+        if self.customer.profile.remain_cancellations <= 0:
+            raise ValidationError("Bạn không thể hủy đơn hàng này. Lý do: Bạn đã hết lượt hủy đơn hàng.")
+        if not self.is_cancellable:
+            raise ValidationError("Bạn không thể hủy đơn hàng này. Lý do: Người giao hàng đã nhận được hàng")
+
+        for order_product in self.order_products.all():
+            if order_product.status.code == "submitted":
+                order_product.cancel()
+                self.logs.create(
+                    log=f"{datetime.datetime.now()}: Món {order_product.product.name} với số lượng {order_product.quantity} đã bị hủy từ phía khách hàng")
+
+        self.delivery.cancel()
+        self.delivery_status = Delivery_Status.objects.get(code = "incompleted")
+        self.order_status = Order_Status.objects.get(code = "cancelled")
+        self.save()
+        self.logs.create(
+            log=f"{datetime.datetime.now()}: Đơn hàng đã bị hủy từ phía khách hàng")
+
+    def cancel_others(self):
+        for order_product in self.order_products.all():
+            if order_product.status.code == "submitted":
+                order_product.cancel()
+                self.logs.create(
+                    log=f"{datetime.datetime.now()}: Món {order_product.product.name} với số lượng {order_product.quantity} đã bị hủy từ phía khách hàng")
+
 
 class Order_Product_Status(models.Model):
     code = models.CharField(max_length=20)
@@ -334,6 +375,20 @@ class Order_Product(models.Model):
         unique_together = ["order","product"]
     def __str__(self):
         return f"{self.product.name} {self.order.__str__()}"
+
+    @property
+    def review(self):
+        try:
+            with transaction.atomic():
+                return Product_Review.objects.get(product=self.product, author=self.order.customer)
+        except:
+            return None
+    def cancel(self):
+        if self.status.code != "submitted" or self.order.order_status.code != "submitted":
+            raise ValidationError(f"Món ăn {self.product.name} không thể bị hủy")
+        self.status = Order_Product_Status.objects.get(code="cancelled")
+        self.save()
+        self.order.calculate_total()
 
 class Order_Log(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE,related_name="logs")

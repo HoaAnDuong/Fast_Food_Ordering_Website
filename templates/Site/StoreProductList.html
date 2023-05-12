@@ -4,12 +4,12 @@
         {% if user.is_authenticated %}
             {% if user.store %}
                 <ul class="nav nav-tabs">
-                    <li><a href="/store">Thông tin Cửa hàng</a></li>
-                    <li class="active"><a href="/store/product-list/1">Danh sách Món ăn</a></li>
-                    <li><a href="/store/order-product/1">Các món đang được đặt</a></li>
+                    <li><a href="/current-store">Thông tin Cửa hàng</a></li>
+                    <li class="active"><a href="/current-store/product-list/1">Danh sách Món ăn</a></li>
+                    <li><a href="/current-store/order-product/1">Các món đang được đặt</a></li>
                 </ul>
                 <br>
-                <table class = "table table-hover">
+                <table class = "table table-hover" style = "width: 50vw;">
                     <thead>
                         <tr>
                             <th>Tên</th>

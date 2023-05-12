@@ -79,7 +79,7 @@ var start_marker = L.marker(start_latLng,{icon: startIcon})
 start_marker.addTo(map)
 
 var lngLatString = `${Math.round(start_lng.value * 100000) / 100000}, ${Math.round(start_lat.value * 100000) / 100000}`;
-start_marker.bindPopup(`<b>${lngLatString}</b>`);
+start_marker.bindPopup(`<b>${lngLatString}</b><br><b>Vị trí bắt đầu</b>`);
 start_marker.openPopup();
 
 
@@ -88,8 +88,11 @@ destination_latLng = L.latLng([destination_lat.value,destination_lng.value])
 var destination_marker = L.marker(destination_latLng,{icon: destinationIcon})
 destination_marker.addTo(map)
 
+var destination_circle_marker = L.circle(destination_latLng,{radius:100,color:"#2A81CB"});
+    destination_circle_marker.addTo(map);
+
 lngLatString = `${Math.round(destination_lat.value * 100000) / 100000}, ${Math.round(destination_lng.value * 100000) / 100000}`;
-destination_marker.bindPopup(`<b>${lngLatString}</b><p>${destination_address.value}</p>`);
+destination_marker.bindPopup(`<b>${lngLatString}</b><p>${destination_address.value}</p><br><b>Vị trí giao hàng</b>`);
 destination_marker.openPopup();
 
 deliverer_latLng = L.latLng([deliverer_lat.value,deliverer_lng.value])
@@ -98,7 +101,7 @@ var deliverer_marker = L.marker(deliverer_latLng,{icon: delivererIcon})
 deliverer_marker.addTo(map)
 
 lngLatString = `${Math.round(deliverer_lat.value * 100000) / 100000}, ${Math.round(deliverer_lng.value * 100000) / 100000}`;
-deliverer_marker.bindPopup(`<b>${lngLatString}</b>`);
+deliverer_marker.bindPopup(`<b>${lngLatString}</b><br><b>Vị trí người giao hàng</b>`);
 deliverer_marker.openPopup();
 
 for(let i = 0;i<num_points.value;i++){
@@ -120,6 +123,8 @@ for (let i=0;i < num_of_store.value;i++){
     lngLatString = `${Math.round(store_lng.value * 100000) / 100000}, ${Math.round(store_lat.value * 100000) / 100000}`;
     store_marker.bindPopup(`<b>${lngLatString}</b><br><b>${store_name.innerHTML}</b><p>${store_address.value}</p>`);
     store_marker.openPopup();
+    circle_marker = L.circle([store_lat.value,store_lng.value],{radius:100,color:"#CB8427"});
+    circle_marker.addTo(map);
 }
 
 const routeLines = L.layerGroup().addTo(map);
@@ -197,6 +202,9 @@ async function delivererLocationRefresh(){
                deliverer_marker.setLatLng([json.deliverer_lat,json.deliverer_lng]);
                deliverer_lat.value = json.deliverer_lat
                deliverer_lng.value = json.deliverer_lng
+
+               lngLatString = `${Math.round(deliverer_lat.value * 100000) / 100000}, ${Math.round(deliverer_lng.value * 100000) / 100000}`;
+                deliverer_marker.bindPopup(`<b>${lngLatString}</b><br><b>Vị trí người giao hàng</b>`);
             },
             error: function(data){
                let json = $.parseJSON(data);

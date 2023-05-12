@@ -88,6 +88,9 @@ destination_latLng = L.latLng([destination_lat.value,destination_lng.value])
 var destination_marker = L.marker(destination_latLng,{icon: destinationIcon})
 destination_marker.addTo(map)
 
+var destination_circle_marker = L.circle(destination_latLng,{radius:100,color:"#2A81CB"});
+    destination_circle_marker.addTo(map);
+
 lngLatString = `${Math.round(destination_lat.value * 100000) / 100000}, ${Math.round(destination_lng.value * 100000) / 100000}`;
 destination_marker.bindPopup(`<b>${lngLatString}</b><br><b>Điểm giao hàng</b><p>${destination_address.value}</p>`);
 destination_marker.openPopup();
@@ -130,6 +133,9 @@ for (let i=0;i < num_of_store.value;i++){
                             </button>
                             `);
     store_marker.openPopup();
+
+    circle_marker = L.circle([store_lat.value,store_lng.value],{radius:100,color:"#CB8427"});
+    circle_marker.addTo(map);
 }
 
 const routeLines = L.layerGroup().addTo(map);

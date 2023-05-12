@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from locations.utils import distance
 from orders.models import Order,Order_Product_Status,Order_Status,Payment_Status
 from orders.models import Delivery_Status as Order_Delivery_Status
+from products.models import Product
 import datetime
 from django.db.models import Count, F, Value, Q
 from foodapp.settings import MAX_CHOOSE_DELIVERY_DISTANCE,MAX_GET_PRODUCT_DISTANCE
@@ -130,12 +131,12 @@ class Delivery(models.Model):
 
         for point in shortest_path:
             deliverers = Deliverer_Profile.objects\
-                                                .filter(current_location__region = self.order.destination.region,status__code = "active")\
+                                                .filter(status__code = "active")\
                                                 .exclude(user = self.order.customer)\
                                                 .annotate(distance = ((F("current_location__lat")-point.lat) ** 2.
                                                     + (F("current_location__lng")-point.lng) ** 2.)
-                                                    ** 0.5 * 111.319)\
-                                                .filter(distance__lte = MAX_CHOOSE_DELIVERY_DISTANCE)\
+                                                    ** 0.5 * 111.319) \
+                                                .filter(distance__lte = MAX_CHOOSE_DELIVERY_DISTANCE) \
                                                 .order_by('distance')
 
             if len(deliverers) != 0:
@@ -199,15 +200,6 @@ class Delivery(models.Model):
         self.order.logs.create(log = f"{datetime.datetime.now()}: Người giao hàng đã nhận món {order_product.product.name} với số lượng {order_product.quantity}")
         order_product.save()
 
-    def update_product_image(self,request):
-        order_product = self.order.order_products.get(product__id=request.POST.get("product_id"))
-        if order_product.status.code != "delivering":
-            raise ValidationError(f"Bạn không thể sửa ảnh minh chứng của món {order_product.name} bây giờ.")
-        if request.FILES.get('image') == None: raise FileNotFoundError("Ảnh chưa được tải lên")
-        image_upload(subfolders="order_products", instance=order_product, file=request.FILES['image'])
-
-
-
     def get_store_products(self,request):
         if request.FILES.get('image') == None: raise FileNotFoundError("Ảnh chưa được tải lên")
         order_products = self.order.order_products.filter(product__store__id=request.POST.get("store_id"))
@@ -223,6 +215,27 @@ class Delivery(models.Model):
                 self.order.logs.create(
                     log=f"{datetime.datetime.now()}: Người giao hàng đã nhận món {order_product.product.name} với số lượng {order_product.quantity}")
                 order_product.save()
+
+    def cancel_product(self, request):
+        order_product = self.order.order_products.get(product__id=request.POST.get("product_id"))
+        order_product.cancel()
+        order_product.save()
+        self.logs.create(
+            log=f"{datetime.datetime.now()}: Món {order_product.product.name} với số lượng {order_product.quantity} đã bị hủy từ phía người giao hàng")
+
+    def cancel_store_products(self,request):
+        order_products = self.order.order_products.filter(product__store__id=request.POST.get("store_id"))
+        for order_product in order_products:
+            order_product.cancel()
+            order_product.save()
+            order_product.order.logs.create(
+                log=f"{datetime.datetime.now()}: Món {order_product.product.name} với số lượng {order_product.quantity} đã bị hủy từ phía người giao hàng")
+    def update_product_image(self, request):
+        order_product = self.order.order_products.get(product__id=request.POST.get("product_id"))
+        if order_product.status.code != "delivering":
+            raise ValidationError(f"Bạn không thể sửa ảnh minh chứng của món {order_product.name} bây giờ.")
+        if request.FILES.get('image') == None: raise FileNotFoundError("Ảnh chưa được tải lên")
+        image_upload(subfolders="order_products", instance=order_product, file=request.FILES['image'])
 
     def arrived_check(self):
 
@@ -246,7 +259,7 @@ class Delivery(models.Model):
         if distance(self.deliverer.current_location,self.order.destination) > MAX_GET_PRODUCT_DISTANCE:
             raise ValidationError(f"Khoảng cách nhận hàng vượt quá {MAX_GET_PRODUCT_DISTANCE} km (Thực tế: {distance(self.deliverer.current_location,self.order.destination)}). Người giao hàng vui lòng đến gần vị trí giao hàng hơn.")
         for item in self.order.order_products.all():
-            if item.status.code != "cancelled" and item.status.code != "delivering":
+            if item.status.code != "cancelled" and item.status.code != "delivering" and item.status.code != "received":
                 raise ValidationError(f"Món ăn {item.product.name} vẫn chưa được lấy và vận chuyển")
 
         if self.status.code != "arrived":
@@ -254,6 +267,7 @@ class Delivery(models.Model):
 
         for item in self.order.order_products.all():
             item.status = Order_Product_Status.objects.get(code = "received")
+            item.save()
 
 
         order = self.order
@@ -301,7 +315,10 @@ class Delivery(models.Model):
         else:
             raise ValidationError("Bạn cần phải đợi 15 phút kể từ khi có mặt tại điểm giao hàng để báo cáo việc khách hàng không nhận hàng và thanh toán ngay bây giờ.")
 
-
+    def cancel(self):
+        if self.order.is_cancellable:
+            self.status = Delivery_Status.objects.get(code = "incompleted")
+            self.save()
 class Delivery_Point(models.Model):
     priority = models.PositiveIntegerField(default=1)
     delivery = models.ForeignKey(Delivery, on_delete=models.CASCADE, related_name="points", null=True)

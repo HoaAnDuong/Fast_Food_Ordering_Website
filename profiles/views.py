@@ -62,6 +62,10 @@ def ProfileView(request):
                 except Exception as e:
                     ctx["error"] = "location"
                     messages.error(request, message=f"{type(e)}:{e}")
+
+            case "change_password":
+                profile.change_password(request)
+                ctx["password_changed"] = True
         profile = Profile.objects.get(user=request.user)
         ctx["profile"] = profile
 

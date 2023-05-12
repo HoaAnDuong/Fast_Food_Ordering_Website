@@ -5,6 +5,7 @@ import datetime
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from locations.utils import distance
 
+
 WEEKDAYS = [
   (0, "Monday"),
   (1, "Tuesday"),
@@ -59,6 +60,7 @@ class Store(models.Model):
 			return self.status.code == "active" and now_hour >= today_opening_hour.from_hour and now_hour <= today_opening_hour.to_hour
 		except:
 			return False
+
 	def distance_to(self,location):
 		return distance(self.location,location)
 

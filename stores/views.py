@@ -6,7 +6,10 @@ from django.db import transaction
 from stores.models import Store_Opening_Hours,Store
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from django.core.paginator import Paginator
+from orders.models import Order_Product
 from products.models import Product
+from django.http import HttpResponse,Http404
+import json
 
 # Create your views here.
 
@@ -117,13 +120,48 @@ def OrderProductView(request,page_id):
         store = request.user.store
     except:
         store = None
-    products = Product.objects.filter(store = store)
-    order_products = []
-    for product in products:
-        order_products += product.order_products.exclude(status__code = "pending")
-    paginator = Paginator(order_products, 10)
-    page = paginator.get_page(page_id)
-    ctx["page"] = page
-    ctx["page_range"] = range(1, paginator.num_pages + 1)
+    if store != None:
+
+        order_products = Order_Product.objects.exclude(status__code="pending").filter(product__store = store).order_by("-updated")
+
+        paginator = Paginator(order_products, 10)
+        page = paginator.get_page(page_id)
+        ctx["page"] = page
+        ctx["page_range"] = range(1, paginator.num_pages + 1)
+        if request.method == "POST":
+            match request.POST.get("form_tag"):
+                case "cancel_product":
+                    selected_order_product = page[int(request.POST.get("id"))]
+                    selected_order_product.cancel()
+                    selected_order_product.order.logs.create(
+                        log=f"{datetime.datetime.now()}: Món {selected_order_product.product.name} với số lượng {selected_order_product.quantity} đã bị hủy từ phía cửa hàng")
+
 
     return render(request, "Site/StoreOrderProduct.html", ctx)
+
+def GetLatestOrderProduct(request):
+    pass
+    ctx = {}
+    if request.method == 'POST':
+        if request.user.is_store_owner:
+            try:
+                with transaction.atomic():
+                    store = request.user.store
+                    order_product = Order_Product.objects\
+                                            .exclude(status__code="pending")\
+                                            .filter(product__store=store).order_by("-updated")[0]
+            except:
+                return HttpResponse(status=400)
+
+            if order_product:
+                ctx = {
+                    "product_name":order_product.product.name,
+                    "quantity":order_product.product.quantity,
+                    "price":order_product.price,
+                    "status":order_product.status,
+                    "updated":order_product.updated
+                }
+                return HttpResponse(json.dumps(ctx), status=200)
+            return HttpResponse(status=400)
+    else:
+        return Http404()

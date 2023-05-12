@@ -48,9 +48,36 @@ async function orderDataRefresh(){
                     }else{
                         location.reload();
                     }
-
                 }
                 order_product_table.tFoot.rows[0].cells[4] = json.product_total
+
+                try{
+                    submit_order_table = document.getElementById("submit_order_table")
+                    submit_order_rows = submit_order_table.tBodies[0].rows
+                    for(let i = 0; i < json.order_product.length;i++){
+                        if(submit_order_rows[i] != undefined){
+                            if(submit_order_rows[i].cells[0].childNodes[0].innerHTML != json.order_product[i].name){
+                                location.reload();
+                            }
+                            if(submit_order_rows[i].cells[6].innerHTML != json.order_product[i].updated){
+                                submit_order_rows[i].cells[0].innerHTML = `<a href = "/product/${json.order_product[i].slug}">${json.order_product[i].name}</a>`
+                                submit_order_rows[i].cells[1].innerHTML = `<img style = "width:100px; height:62px;" src = "${json.order_product[i].image_url}">`
+                                submit_order_rows[i].cells[2].innerHTML = json.order_product[i].price;
+                                submit_order_rows[i].cells[3].innerHTML = json.order_product[i].quantity;
+                                submit_order_rows[i].cells[4].innerHTML = json.order_product[i].total;
+                                submit_order_rows[i].cells[5].innerHTML = json.order_product[i].status;
+                                submit_order_rows[i].cells[6].innerHTML = json.order_product[i].updated;
+                                submit_order_rows[i].cells[7].innerHTML = json.order_product[i].note;
+                            }
+                        }else{
+                            location.reload();
+                        }
+                    }
+                    submit_order_table.tFoot.rows[0].cells[4] = json.product_total
+                }catch{
+
+                }
+
 
                 log_table = document.getElementById("log_table")
                 log_table_body = log_table.tBodies[0]

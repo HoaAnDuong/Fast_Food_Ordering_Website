@@ -11,7 +11,7 @@
 
             <ul class="col-md-2 nav nav-pills nav-stacked">
                 <li class="active"><a data-toggle = "tab" href="#profile">Thông tin Đơn Hàng</a></li>
-                <li><a data-toggle = "tab" href="#order_product_tab">Giỏ hàng</a></li>
+                <li><a data-toggle = "tab" href="#order_product_tab">Giỏ hàng<span class="badge">{{current_order.total_quantity}}</span></a></li>
                 <li><a data-toggle = "tab" href="#order_log">Nhật ký</a></li>
             </ul>
             <div class = "col-md-8 tab-content">
@@ -74,35 +74,35 @@
 
 
 
-                    {% if store_list %}
-                        <h3>Danh Sách Cửa Hàng</h3>
-                        <input type = "hidden" id="num_of_store" value = "{{store_list|length}}">
-                        <table class = "table table-hover" style = "width = auto;" id = "store_table">
-                            <thead>
-                                <tr>
-                                    <th>Tên</th>
-                                    <th>Địa chỉ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for i in store_list %}
-                                <tr>
-                                    <td>
-                                        <label id = "store_{{ forloop.counter0 }}_name">{{i.name}}</label>
-                                    </td>
-                                    <td>
-                                        <label>{{i.location.address}}</label>
-                                        <input type = "hidden" id="store_{{ forloop.counter0 }}_lat" value = {{i.location.lat}}>
-                                        <input type = "hidden" id="store_{{ forloop.counter0 }}_lng" value = {{i.location.lng}}>
-                                        <input type = "hidden" id="store_{{ forloop.counter0 }}_address" value = "{{i.location.address}}">
-                                    </td>
-                                </tr>
 
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <h3>Danh Sách Cửa Hàng</h3>
+                    <input type = "hidden" id="num_of_store" value = "{{store_list|length}}">
+                    <table class = "table table-hover" style = "width = auto;" id = "store_table">
+                        <thead>
+                            <tr>
+                                <th>Tên</th>
+                                <th>Địa chỉ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in store_list %}
+                            <tr>
+                                <td>
+                                    <label id = "store_{{ forloop.counter0 }}_name">{{i.name}}</label>
+                                </td>
+                                <td>
+                                    <label>{{i.location.address}}</label>
+                                    <input type = "hidden" id="store_{{ forloop.counter0 }}_lat" value = {{i.location.lat}}>
+                                    <input type = "hidden" id="store_{{ forloop.counter0 }}_lng" value = {{i.location.lng}}>
+                                    <input type = "hidden" id="store_{{ forloop.counter0 }}_address" value = "{{i.location.address}}">
+                                </td>
+                            </tr>
 
-                    {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+
 
                     {% if current_order.order_status.code == "pending"  %}
                        <form method = "POST" id = "location">
@@ -258,7 +258,8 @@
                                     <td>{{order_product.status.code}}</td>
                                     <td></td>
                                     <td>{{order_product.note}}</td>
-                                    {% if current_order.order_status.code == "pending" %}
+                                    {% if current_order.order_status.code == "pending" or current_order.order_status.code == "submitted" %}
+                                    {% if order_product.status.code == "pending" or order_product.status.code == "submitted" %}
                                     <td>
                                         <button type="button" class="btn" data-toggle="modal" data-target="#order_product_modal_{{forloop.counter0}}">
                                             Cập Nhật
@@ -282,12 +283,12 @@
                                                                     <div class = "form-group">
                                                                         <label>Số Lượng</label>
                                                                         <br>
-                                                                        <input type="number" name = "quantity" value = "" min = "1" max = "15">
+                                                                        <input type="number" name = "quantity" value = "{{order_product.quantity}}" min = "1" max = "15">
                                                                     </div>
                                                                     <div class = "form-group">
                                                                         <label style = "display: flex">Ghi chú</label>
                                                                         <br>
-                                                                        <textarea name = "note" style = "width:500px; height:250px" maxlength="255"></textarea>
+                                                                        <textarea name = "note" style = "width:500px; height:250px" maxlength="255">{{order_product.note}}</textarea>
                                                                     </div>
                                                                 </div>
                                                                 <div class="modal-footer">
@@ -314,6 +315,8 @@
                                             </div>
                                         </div>
                                     </td>
+                                    {% endif %}
+                                    {% if current_order.order_status.code == "pending" %}
                                     <td>
                                         <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#delete_product_modal_{{forloop.counter0}}">Xóa món</button>
                                         <div id = "delete_product_modal_{{forloop.counter0}}" class = "modal fade" role="dialog">
@@ -359,6 +362,60 @@
                                             </div>
                                         </div>
                                     </td>
+                                    {% elif current_order.order_status.code == "submitted" and order_product.status.code == "submitted" %}
+                                    <td>
+                                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#cancel_product_modal_{{forloop.counter0}}">Hủy món</button>
+                                        <div id = "cancel_product_modal_{{forloop.counter0}}" class = "modal fade" role="dialog">
+                                            <div class="modal-dialog">
+                                                {% if user.is_authenticated %}
+                                                    {% if not product.store == user.store %}
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                <h4 class="modal-title">
+                                                                    Hủy món: {{order_product.product.name}} - Số lượng: {{order_product.quantity}}
+                                                                </h4>
+                                                        </div>
+                                                        <form method = "POST">
+                                                            {% csrf_token %}
+                                                                <div class = "modal-body">
+                                                                    <input type = "hidden" name = "form_tag" value = "cancel_product" readonly>
+                                                                    <input type = "hidden" name = "product_id" value = "{{order_product.product.id}}" readonly>
+                                                                    <h4>Bạn có chắc chắn muốn hủy {{order_product.product.name}} với số lượng {{order_product.quantity}} ra khỏi giỏ hàng?</h4>
+                                                                    <h4>Lưu ý</h4>
+                                                                    <h5>Trước khi xác nhận hủy món, xin bạn hãy nhập lại mật khẩu:</h5>
+                                                                    <input type = "password" name = "password">
+                                                                </div>
+
+                                                                <div class="modal-footer">
+                                                                    <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                                </div>
+                                                            </form>
+                                                    </div>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <label>Bạn cần phải đăng nhập để mua hàng</label>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                    {% elif order_product.status.code == "received" %}
+                                    <td>
+                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#review_product_modal_{{forloop.counter0}}">Đánh giá</button>
+                                    </td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}
@@ -372,7 +429,6 @@
                                     <td>{{current_order.product_total}}</td>
                                     <td></td>
                                     <td></td>
-
                                 </tr>
                             </tfoot>
 
@@ -412,24 +468,61 @@
                                             Bạn có chắc chắn muốn đặt đơn hàng này không?
                                         </h4>
                                     </div>
-                                    <form method = "POST" id = "submit_order_form">
-                                        {% csrf_token %}
-                                        <input type = "hidden" name = "form_tag" value = "submit_order" readonly>
-<!--                                        <h4>Danh sách các món ăn:</h4>-->
-<!--                                        {% for order_product in current_order.order_products.all %}-->
-<!--                                        <h5>Tên:{{order_product.product.name}}</h5>-->
-<!--                                        <h5>Đơn giá:{{order_product.price}}</h5>-->
-<!--                                        <h5>Số lượng:{{order_product.quantity}}</h5>-->
-<!--                                        <h5>Tổng:{{order_product.total}}</h5>-->
-<!--                                        <br>-->
-<!--                                        {% endfor %}-->
-                                        <h4>Trước khi xác nhận đơn hàng, xin bạn hãy nhập lại mật khẩu:</h4>
-                                        <input type = "password" id = "password" name = "password">
-                                        <div class="modal-footer">
-                                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
-                                        </div>
-                                    </form>
+                                    <div class = "modal-body">
+                                        <form method = "POST" id = "submit_order_form">
+                                            {% csrf_token %}
+                                            <input type = "hidden" name = "form_tag" value = "submit_order" readonly>
+                                            <h4>Bạn có muốn đặt các món dưới đây:</h4>
+                                            <table id = "submit_order_table" class = "table table-hover" style = "width: auto;">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Tên món</th>
+                                                        <th>Hình ảnh</th>
+                                                        <th>Đơn Giá</th>
+                                                        <th>Số lượng</th>
+                                                        <th>Tổng</th>
+                                                        <th>Trạng thái</th>
+                                                        <th>Lần cập nhật gần nhất</th>
+                                                        <th>Ghi chú</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for order_product in current_order.order_products.all %}
+                                                    <tr>
+                                                        <td><a href = "/product/{{order_product.product.slug}}">{{order_product.product.name}}</a></td>
+                                                        <td><img style = "width:100px; height:62px;" src = "{{order_product.product.image.url}}"></td>
+                                                        <td>{{order_product.price}}</td>
+                                                        <td>{{order_product.quantity}}</td>
+                                                        <td>{{order_product.total}}</td>
+                                                        <td>{{order_product.status.code}}</td>
+                                                        <td></td>
+                                                        <td>{{order_product.note}}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr>
+                                                        <td>Tổng</td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td>{{current_order.product_total}}</td>
+                                                        <td></td>
+                                                        <td></td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                            <h4>Lưu ý</h4>
+                                            <h5>- Sau khi xác nhận thì không thể thêm món mới. Tuy nhiên vẫn có thể thay đổi số lượng của món và hủy món.</h5>
+                                            <h5>- Trước khi xác nhận đơn hàng, xin bạn hãy nhập lại mật khẩu:</h5>
+                                            <input type = "password" id = "password" name = "password">
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                            </div>
+                                        </form>
+                                    </div>
+
                                 </div>
                             {% else %}
                                 <div class="modal-content">
@@ -447,36 +540,279 @@
                             {% endif %}
                         </div>
                     </div>
+                    {% elif current_order.order_status.code == "submitted" %}
+                        {% if current_order.is_cancellable %}
+                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#cancel_order_modal">
+                            Hủy đơn hàng
+                        </button>
+                        <div id = "cancel_order_modal" class = "modal fade" role="dialog">
+                            <div class="modal-dialog">
+                                {% if user.is_authenticated %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">
+                                                Bạn có chắc chắn muốn hủy đơn hàng này không?
+                                            </h4>
+                                        </div>
+                                        <div class = "modal-body">
+                                            <form method = "POST" id = "cancel_order_form">
+                                                {% csrf_token %}
+                                                <input type = "hidden" name = "form_tag" value = "cancel_order" readonly>
+                                                <h4>Bạn có muốn xác nhận hủy đơn hàng không?</h4>
+                                                <h4>Lưu ý</h4>
+                                                <h5>- Bạn còn <b>{{ remain_cancellations }}</b> lần hủy đơn hàng trong tháng này.</h5>
+                                                <h5>- Việc hủy đơn hàng là không thể hoàn tác. Bạn hãy suy nghĩ thật kĩ trước khi làm việc này</h5>
+                                                <h5>- Trước khi xác nhận đơn hàng, xin bạn hãy nhập lại mật khẩu:</h5>
+                                                <input type = "password" id = "password" name = "password">
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                    </div>
+                                {% else %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label>Bạn cần phải đăng nhập để mua hàng</label>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#cancel_others_modal">
+                            Hủy các món còn lại
+                        </button>
+                        <div id = "cancel_others_modal" class = "modal fade" role="dialog">
+                            <div class="modal-dialog">
+                                {% if user.is_authenticated %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">
+                                                Bạn có chắc chắn muốn hủy các món còn lại không?
+                                            </h4>
+                                        </div>
+                                        <div class = "modal-body">
+                                            <form method = "POST" id = "cancel_order_form">
+                                                {% csrf_token %}
+                                                <input type = "hidden" name = "form_tag" value = "cancel_others" readonly>
+                                                <h4>Bạn có chắc chắn muốn hủy các món còn lại không?</h4>
+                                                <h4>Lưu ý</h4>
+
+                                                <h5><b>- Vì Người giao hàng đã nhận hàng hoặc Bạn đã vượt quá số lần hủy cho phép trong một tháng, nên bạn không thể hủy đơn hàng này. Thay vào đó, bạn có thể hủy các món ăn còn lại</b></h5>
+                                                <h5>- Việc hủy món là không thể hoàn tác. Bạn hãy suy nghĩ thật kĩ trước khi làm việc này</h5>
+                                                <h5>- Trước khi xác nhận đơn hàng, xin bạn hãy nhập lại mật khẩu:</h5>
+                                                <input type = "password" id = "password" name = "password">
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                    </div>
+                                {% else %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label>Bạn cần phải đăng nhập để mua hàng</label>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% elif current_order.order_status.code != "arrived" and request.user.profile.is_customer %}
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#create_order_modal">
+                            Tạo đơn hàng mới
+                        </button>
+                    {% endif %}
+                    {% if current_order.order_status.code == "completed" %}
+                        <div id = "rating_products_modal" class = "modal fade" role="dialog">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title">
+                                            Đánh giá
+                                        </h4>
+                                    </div>
+                                    <div class = "modal-body">
+                                        <h4>Hãy để lại đánh giá của quý khách cho các món ăn dưới đây:</h4>
+                                        <table class = "table table-hover" style = "width: auto;">
+                                            <thead>
+                                            <tr>
+                                                <th>Món ăn</th>
+                                                <th>Hình ảnh</th>
+                                                <th>Số lượng</th>
+                                                <th>Đơn giá</th>
+                                                <th>Tổng</th>
+                                                <th>Hành động</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for order_product in current_order.order_products.all %}
+                                            {% if order_product.status.code == "received" %}
+                                            <tr>
+                                                <td><a href = "/product/{{order_product.product.slug}}">{{order_product.product.name}}</a></td>
+                                                <td><img style = "width:100px; height:62px;" src = "{{order_product.product.image.url}}"></td>
+                                                <td>{{order_product.product.quantity}}</td>
+                                                <td>{{order_product.product.price}}</td>
+                                                <td>{{order_product.product.total}}</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-primary" id = "rating_{{forloop.counter0}}_button">Đánh giá</button>
+                                                    <script>
+                                                        $("#rating_{{forloop.counter0}}_button").click(function(){
+                                                            $('#review_product_modal_{{forloop.counter0}}').modal('show');
+                                                        });
+                                                    </script>
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Bỏ qua</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            $(window).on('load', function() {
+                               $('#rating_products_modal').modal('show');
+                            });
+                        </script>
+                        {% for order_product in current_order.order_products.all %}
+                        {% if order_product.status.code == "received" %}
+                        <div id = "review_product_modal_{{forloop.counter0}}" class = "modal fade" role="dialog" style="z-index:10000;">
+                            <div class="modal-dialog">
+                                {% if user.is_authenticated %}
+                                    {% if not order_product.product.store == user.store %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">
+                                                Đánh giá món: {{order_product.product.name}}
+                                            </h4>
+                                        </div>
+                                        <form></form>
+                                        <form></form>
+                                        <form method = "POST" enctype="multipart/form-data">
+                                            {% csrf_token %}
+                                                <div class = "modal-body">
+                                                    <input type = "hidden" name = "form_tag" value = "review_product" readonly>
+                                                    <input type = "hidden" name = "product_id" value = "{{order_product.product.id}}" readonly>
+                                                    <div style = "display:flex;justify-content: flex-start;">
+                                                        <img src="{{ user.profile.avatar.url }}" class = "avatar" style = "margin-right:10px;">
+
+                                                        <div style="position: relative;bottom:20px;">
+                                                            <h3>{{user.profile.last_name}} {{user.profile.first_name}}</h3>
+                                                            <h5>{% if order_product.review %}{{order_product.review.updated}}{% else %}{% now "DATETIME_FORMAT"%}{% endif %}</h5>
+                                                            {% if order_product.review %}
+                                                                {% if order_product.review.is_updated%}
+                                                                <h5>Đã chỉnh sửa</h5>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+
+                                                    <hr style="margin:0px; position: relative;bottom:10px;">
+
+
+                                                    <h5>Điểm đánh giá</h5>
+                                                    <input id="rating_{{forloop.counter0}}" type="text" name = "rating" value = "{% if order_product.review %}{{order_product.review.rating}}{% else %}5{% endif %}">
+
+                                                    <hr style = "margin:0px; position: relative;bottom:10px;">
+
+                                                    <h5>Hình ảnh(Không bắt buộc):</h5>
+                                                    <input type="file" id = "rating_image_{{ forloop.counter0 }}_upload" name="image" accept="image/*"/>
+                                                    <img id = "rating_image_{{ forloop.counter0 }}" src = "{% if order_product.review %}{% if order_product.review.image %}{{order_product.review.image.url}}{% endif %}{% else %}#{% endif %}"
+                                                                                                    style = "{% if order_product.review.image %}width:30vw; height:18.54vw;{% endif %}">
+                                                    <h5>Tiêu đề</h5>
+                                                    <input type = "text" name = "title" value = "{% if order_product.review %}{{order_product.review.title}}{% endif %}" maxlength="128">
+
+                                                    <h5>Nội dung đánh giá</h5>
+                                                    <textarea name = "review" style = "width:30vw; height:18.54vw;" maxlength="2048">{% if order_product.review %}{{order_product.review.review}}{% endif %}</textarea>
+
+
+                                                    <script>
+                                                        $("#rating_image_{{ forloop.counter0 }}_upload").change(function() {
+                                                            input = this;
+                                                            if (input.files && input.files[0]) {
+                                                                var reader = new FileReader();
+                                                                reader.onload = function(e) {
+                                                                  $("#rating_image_{{ forloop.counter0 }}").attr('src', e.target.result);
+                                                                  $("#rating_image_{{ forloop.counter0 }}").attr("style", "width:30vw; height:18.54vw;");
+                                                                }
+                                                                reader.readAsDataURL(input.files[0]);
+                                                            }
+                                                        });
+                                                        $("#rating_{{forloop.counter0}}").rating({min:0, max:5, step:0.5,
+                                                                                                 size:'md',starCaptions:(val)=>{return `${val}`},
+                                                                                                 displayOnly:false});
+                                                    </script>
+
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Đánh giá</button>
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                </div>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label>Bạn cần phải đăng nhập để mua hàng</label>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
                     {% endif %}
 
                 {% load static %}
                 <script src="{% static 'js/current-order.js' %}"></script>
             </div>
+
             {% else %}
                 {% if user.profile.is_customer %}
-            <div class = "col-md-6 p-4 text-center form-default">
-                <form method = "POST">
-                    {% csrf_token %}
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <label>Tạo đơn hàng mới</label>
-                        </div>
-                        <div class = "modal-body">
-                            <form method = "POST">
-                                {% csrf_token %}
-                                <h4>Bạn có chắc chắn muốn tạo một đơn hàng mới</h4>
-                                <input type="hidden" name="form_tag" value = "create_order" readonly>
-                                <button type = "submit" class = "btn btn-default">Có</button>
-                                <a href ="/">
-                                    <button type = "button" class = "btn btn-default">Không</button>
-                                </a>
-                            </form>
-                        </div>
-                    </div>
 
-                </form>
+                <script>
+                    $(window).on('load', function() {
+                       $('#create_order_modal').modal('show');
+                    });
+                </script>
 
-            </div>
                 {% else %}
                 <div>
                     <meta http-equiv="refresh" content="1; url='/'">
@@ -485,13 +821,38 @@
                 {% endif %}
 
             {% endif %}
+            <div id = "create_order_modal" class = "modal fade in" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">
+                                Tạo đơn hàng mới
+                            </h4>
+                        </div>
+                        <form method = "POST">
+                        <div class = "modal-body">
+
+                                {% csrf_token %}
+                                <h4>Bạn có chắc chắn muốn tạo một đơn hàng mới</h4>
+                                <input type="hidden" name="form_tag" value = "create_order" readonly>
 
 
+                        </div>
+                        <div class = "modal-footer">
+                            <button type = "submit" class = "btn btn-default">Có</button>
+                            <a href ="/">
+                                <button type = "button" class = "btn btn-default">Không</button>
+                            </a>
+                        </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
         {% else %}
           <meta http-equiv="refresh" content="1; url='/login'" />
           <div>
-              <h3>You are not logged in now, so you will be directed to Login Page</h3>
+              <h3>Bạn chưa đăng nhập, nên bạn sẽ được chuyển hướng sang trang Đăng Nhập</h3>
           </div>
         {% endif %}
     </div>

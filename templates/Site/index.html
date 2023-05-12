@@ -13,6 +13,7 @@
             crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet-ant-path@1.3.0/dist/leaflet-ant-path.js" type="text/javascript"></script>
@@ -24,23 +25,36 @@
 
     <script src="https://unpkg.com/@esri/arcgis-rest-request@4.0.0/dist/bundled/request.umd.js"></script>
     <script src="https://unpkg.com/@esri/arcgis-rest-routing@4.0.0/dist/bundled/routing.umd.js"></script>
+
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-star-rating/4.1.2/css/star-rating.min.css" media="all" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-star-rating/4.1.2/themes/krajee-svg/theme.css" media="all" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/gh/kartik-v/bootstrap-star-rating@4.1.2/js/star-rating.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-star-rating/4.1.2/themes/krajee-svg/theme.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/kartik-v/bootstrap-star-rating@4.1.2/js/locales/"></script>
+
+    <script src="
+    https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js
+    "></script>
+
     {% load static %}
     <script type="text/javascript" src="{% static 'js/apiKey.js' %}"></script>
 </head>
-<body>
-    <nav class="navbar navbar-default">
+<body data-spy="scroll" data-target=".navbar" data-offset="50">
+    <nav class="navbar navbar-default" style = "margin:0px;">
       <div class="container-fluid">
         <div class="navbar-header">
           <a class="navbar-brand" href="/">Food Ordering App</a>
         </div>
         <ul class="nav navbar-nav">
             <li><a href="/">Trang chủ</a></li>
-
             <li><a href="/product-list/1">Món ăn</a></li>
             <li><a href="/routing-test">Routing Test</a></li>
-            <li><a href="#">Page 3</a></li>
         </ul>
           {% if not user.is_authenticated %}
+
+
+
           <a href="/login">
               <button class = "btn btn-custom navbar-btn">Log In</button>
           </a>
@@ -48,16 +62,16 @@
           <div class="dropleft user-nav" style = "margin-left: 30px; margin-top:1px; position:relative;">
               {% load static %}
               <button class="btn btn-lg" type="button" data-toggle="dropdown" style = "height:48px; width:48px;">
-                  <img src="{% static 'bars-solid.svg' %}" style="margin-left:-7px;height:30px; width:30px;"></img>
+                  <img src="{% static 'bars-solid.svg' %}" style="margin-left:-7px;height:30px; width:30px;">
               </button>
               <ul class="dropdown-menu dropdown-menu-right">
                   <li><a href="/profile">Thông tin Cá nhân</a></li>
                   {% if user.groups.all|length <= 1 %}
-                    <li><a href="/store">Đăng ký Vai trò Chủ cửa hàng</a></li>
+                    <li><a href="/current-store">Đăng ký Vai trò Chủ cửa hàng</a></li>
                     <li><a href="/deliverer-profile">Đăng ký Vai trò Người giao hàng</a></li>
                   {% endif %}
                   {% if user.profile.is_store_owner %}
-                    <li><a href="/store">Cửa hàng</a></li>
+                    <li><a href="/current-store">Cửa hàng</a></li>
                   {% endif %}
                   {% if user.profile.is_deliverer %}
                     <li><a href="/deliverer-profile">Thông tin Người giao hàng</a></li>
@@ -67,9 +81,30 @@
                   <li><a href="/logout">Đăng xuất</a></li>
               </ul>
           </div>
-          <label class = "user-nav name" style = "margin-left:10px; margin-top:7px; position:relative; font-size:25px">{{user.profile.first_name}}</label>
+          <label class = "user-nav name navbar-btn" style = "margin-left:10px; margin-top:7px; position:relative; font-size:25px">{{user.profile.first_name}}</label>
           <img src="{{ user.profile.avatar.url }}" class = "avatar user-nav">
           {% endif %}
+          <div class = "user-nav navbar-btn" style = "display: flex; justify-content: flex-start;">
+              <input id = "search_bar" type = "text" style = "height:36px; width:240px;" maxlength="128">
+              <button id = "search_button" style = "height:36px; width:48px; margin-right:25px; ">
+                <img src="{% static 'magnifying-glass-solid.svg' %}" style="height:20px; width:20px;">
+              </button>
+              <script>
+                  function search_product(){
+                        search_keyword = $("#search_bar").val();
+                        search_keyword = search_keyword === "" ? " " : search_keyword;
+                        window.location.replace(`/product-list/search_keyword/${search_keyword}/1`);
+                  };
+                  $("#search_button").click(search_product);
+                  $("#search_bar").keypress(function(e) {
+                      if (e.which == 13) {
+                        search_product();
+                      }
+                    });
+              </script>
+          </div>
+
+
       </div>
     </nav>
 
@@ -124,27 +159,36 @@
 
 <!--        {% load static %}-->
 <!--        <script type="text/javascript" src="{% static 'js/current-location.js' %}"></script>-->
+        <nav class="navbar nav-pills nav-stacked" data-spy="affix" data-offset-top="200" style = "postion:absolute;z-index:10000;">
 
-        <button data-toggle="collapse" data-target="#fake_location_collapse" class = "btn btn-primary">Fake Location</button>
-        <div id="fake_location_collapse" class="collapse panel panel-default" style = "width: 40vw;">
-            <div class="panel-heading" style = "width: 40vw;">Fake Location</div>
-            <div class = "panel-body" id = "fake_location_map"  style = "height: 40vh; width: 40vw;"></div>
-        </div>
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
-        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
-        <script src="https://unpkg.com/leaflet-ant-path" type="text/javascript"></script>
-        <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.0/leaflet.textpath.min.js"></script>
+            <button data-toggle="collapse" data-target="#fake_location_collapse" class = "btn btn-primary">Fake Location</button>
+            <div id="fake_location_collapse" class="collapse panel panel-default" style = "width: 40vw;">
+                <div class="panel-heading" style = "width: 40vw;">Fake Location</div>
+                <div class = "panel-body" id = "fake_location_map"  style = "height: 40vh; width: 40vw;"></div>
+            </div>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+            <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+            <script src="https://unpkg.com/leaflet-ant-path" type="text/javascript"></script>
+            <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.0/leaflet.textpath.min.js"></script>
 
-        <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
-        <script src="https://unpkg.com/esri-leaflet-vector@4.0.1/dist/esri-leaflet-vector.js"></script>
+            <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
+            <script src="https://unpkg.com/esri-leaflet-vector@4.0.1/dist/esri-leaflet-vector.js"></script>
 
-        <script src="https://unpkg.com/esri-leaflet-geocoder@3.1.4/dist/esri-leaflet-geocoder.js"></script>
+            <script src="https://unpkg.com/esri-leaflet-geocoder@3.1.4/dist/esri-leaflet-geocoder.js"></script>
 
-        <script src="https://unpkg.com/@esri/arcgis-rest-request@4.0.0/dist/bundled/request.umd.js"></script>
-        <script src="https://unpkg.com/@esri/arcgis-rest-routing@4.0.0/dist/bundled/routing.umd.js"></script>
-        {% load static %}
-        <script type="text/javascript" src="{% static 'js/fake-current-location.js' %}"></script>
+            <script src="https://unpkg.com/@esri/arcgis-rest-request@4.0.0/dist/bundled/request.umd.js"></script>
+            <script src="https://unpkg.com/@esri/arcgis-rest-routing@4.0.0/dist/bundled/routing.umd.js"></script>
+            {% load static %}
+            <script type="text/javascript" src="{% static 'js/fake-current-location.js' %}"></script>
+        </nav>
+        {% elif user.profile.is_store_owner %}
+        <input type="hidden" name="latest_product_name">
+        <input type="hidden" name="latest_product_quantity">
+        <input type="hidden" name="latest_product_status">
+        <input type="hidden" name="latest_product_updated">
+        <input type="hidden" name="latest_product_price">
         {% endif %}
+
     {% endif %}
 
     {% block content %}{% endblock %}

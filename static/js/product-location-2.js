@@ -177,14 +177,13 @@ function shortest_path(){
     });
     router.then(routeHandler).catch((error) => {
             console.error(error);
-            alert("There was a problem using the route service. See the console for details.");
     });
 
     return {route:min_path,total_length:document.getElementById("total_length").value}
 
 }
 
-console.log(shortest_path())
+
 
 function reverseGeocoderHandler(error,result){
     if(error){
@@ -257,6 +256,8 @@ store_table_observer.observe(store_table, {
 });
 $(store_table).change(mapChangeHandler);
 
+shortest_path();
+
 
 $(document).on('submit','#location',function(e){
     e.preventDefault();
@@ -271,7 +272,6 @@ $(document).on('submit','#location',function(e){
             console.error(error)
         }else{
             console.log(result);
-
             inner_country.value = result.address.CntryName
             inner_region.value = result.address.Region
             inner_subregion_1.value = result.address.District != "" ? result.address.District : result.address.City
@@ -317,17 +317,17 @@ $(document).on('submit','#submit_order_form',function(e){
     var esri_reverseGeocoder = L.esri.Geocoding.reverseGeocode({apikey: apiKey}).latlng({lat:$("#lat").val(),lng:$("#lng").val()});
     esri_reverseGeocoder.run((error,result)=>{
         if(error){
-            console.error(error)
+            console.error(error);
         }else{
             console.log(result);
-
             inner_country.value = result.address.CntryName
             inner_region.value = result.address.Region
             inner_subregion_1.value = result.address.District != "" ? result.address.District : result.address.City
             inner_subregion_2.value = result.address.Neighborhood
         }
     });
-    shortest_path()
+
+    shortest_path();
 
     $.ajax({
         type:'POST',
@@ -346,14 +346,15 @@ $(document).on('submit','#submit_order_form',function(e){
             subregion_2:inner_subregion_2,
             total_length:$("#total_length").val()
         },
-        success:function (data){
-        location.reload();
+        onSuccess: (response) => {
+            alert(response);
         },
-        error: function (jqXHR, textStatus, errorThrown) {
-            alert('Đã có lỗi xảy ra!');
-            console.log(errorThrown);
+        onFailure: (response) => {
+            alert(response);
         }
     })
+
+    //location.reload();
 
 });
 

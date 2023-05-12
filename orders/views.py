@@ -14,12 +14,14 @@ def CurrentOrderView(request):
     if not request.user.is_anonymous:
         current_order_expire_check(request.user)
         current_order = request.user.profile.current_order
+        ctx["remain_cancellations"] = request.user.profile.remain_cancellations
         ctx["current_order"] = current_order
         if current_order:
             ctx["store_list"] = current_order.store_list
             # ctx["shortest_path"] = current_order.shortest_path()
 
         ctx["payment_methods"] = Payment_Method.objects.all()
+
         if request.method == "POST":
             match request.POST.get("form_tag"):
                 case "create_order":
@@ -47,15 +49,37 @@ def CurrentOrderView(request):
                 case "delete_product":
                     product = Product.objects.get(id=request.POST.get("product_id"))
                     current_order.delete_product(product)
-
+                case "cancel_product":
+                    if not authenticate(request,username = request.user.username,password=request.POST.get("password")):
+                        raise ValidationError("Bạn đã nhập sai mật khẩu")
+                    product = Product.objects.get(id=request.POST.get("product_id"))
+                    current_order.cancel_product(product)
                 case "submit_order":
                     if not authenticate(request,username = request.user.username,password=request.POST.get("password")):
                         raise ValidationError("Bạn đã nhập sai mật khẩu")
                     if not hasattr(current_order,'delivery'):
                         Delivery.objects.create(order = current_order,status = Delivery_Status.objects.get(code="pending"))
-                    current_order.update_location(request)
-                    current_order.destination.save()
-                    current_order.submit_order()
+                    with transaction.atomic():
+                        try:
+                            current_order.update_location(request)
+                            current_order.destination.save()
+                            current_order.submit_order()
+                        except Exception as e:
+                            current_order.logs.create(log = f"{datetime.datetime.now()}: {e}")
+                case "cancel_order":
+                    if not authenticate(request, username=request.user.username, password=request.POST.get("password")):
+                        raise ValidationError("Bạn đã nhập sai mật khẩu")
+                    with transaction.atomic():
+                        try:
+                            pass
+                        except Exception as e:
+                            current_order.logs.create(log=f"{datetime.datetime.now()}: {e}")
+                    current_order.cancel_order()
+                case "cancel_others":
+                    current_order.cancel_others()
+                case "review_product":
+                    product = Product.objects.get(id=request.POST.get("product_id"))
+                    product.make_review(request)
 
 
             current_order = request.user.profile.current_order
