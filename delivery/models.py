@@ -266,8 +266,9 @@ class Delivery(models.Model):
             raise ValidationError("Bạn không thể giao hàng cho khách hàng bây giờ")
 
         for item in self.order.order_products.all():
-            item.status = Order_Product_Status.objects.get(code = "received")
-            item.save()
+            if item.status.code != "cancelled":
+                item.status = Order_Product_Status.objects.get(code = "received")
+                item.save()
 
 
         order = self.order

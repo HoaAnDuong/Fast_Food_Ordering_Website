@@ -11,7 +11,6 @@
                     </div>
                     <div class = "col group-body" style = "width: 80vw; padding-right:10px;">
                         <h2>{{ product.name }}</h2>
-
                         <h3>{{product.store.name}}</h3>
                         <h5>{{ product.store.location.address}}</h5>
                         {% if product.store.is_open %}
@@ -137,6 +136,82 @@
                         </div>
                         {% endif %}
                     </div>
+                </div>
+                <div class = "row product-section" style = "width:65vw; left: 15vw; ">
+                    <div>
+                        <h3>Mô tả:</h3>
+                        <p>{{product.description}}</p>
+                    </div>
+                </div>
+
+                <div class = "row product-section" style = "width:65vw; left: 15vw;">
+                    <div style = "width:60vw; position:relative;">
+                        <h3>Các món khác của quán:</h3>
+                        <hr>
+                        <div style = "width:60vw; max-height:80vh; overflow: scroll;">
+                            {% for p in store_products %}
+                            <div style = "border-style:solid; border-width: thin; padding:10px; margin:10px">
+                                <div style = "display:flex;justify-content: flex-start; ">
+                                    <img src="{{p.image.url}}" style = "width: 150px; height: 93px; margin:10px">
+                                    <div style="position: relative; width:40vw;">
+                                        <h4><a href = "/product/{{p.slug}}">{{ p.name }}</a></h4>
+
+                                        <input id="store_average_rating_{{forloop.counter0}}" type="text" name = "rating" value = "{% if p.average_rating.rating__avg %}{{p.average_rating.rating__avg}}{% else %}0{% endif %}" style = "margin = 0px;">
+                                        <script>
+                                            $("#store_average_rating_{{forloop.counter0}}").rating({min:0, max:5, step:0.5,
+                                                                                     size:'sm',starCaptions:(val)=>{return `${val} (Dựa trên {% if p.average_rating.author__count %}{{p.average_rating.author__count}}{% else %}0{% endif %} lượt đánh giá)`},
+                                                                                     displayOnly:true});
+                                        </script>
+
+                                        <h5>{{p.store.name}}</h5>
+                                        <h5 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{ p.store.location.address}}</h5>
+                                        {% if p.store.is_open %}
+                                            <h5 style="color:green">Mở cửa</h5>
+                                        {% endif %}
+                                        <h5>{{ p.price }}</h5>
+
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class = "row product-section" style = "width:65vw; left: 15vw;">
+                    <div style = "width:60vw; position:relative;">
+                        <h3>Các món được đề xuất:</h3>
+                        <hr>
+                        <div style = "width:60vw; max-height:80vh; overflow: scroll;">
+                            {% for p in recommended_products %}
+                            <div style = "border-style:solid; border-width: thin; padding:10px; margin:10px">
+                                <div style = "display:flex;justify-content: flex-start; ">
+                                    <img src="{{p.image.url}}" style = "width: 150px; height: 93px; margin:10px">
+                                    <div style="position: relative; width:40vw;">
+                                        <h4><a href = "/product/{{p.slug}}">{{ p.name }}</a></h4>
+
+                                        <input id="rec_average_rating_{{forloop.counter0}}" type="text" name = "rating" value = "{% if p.average_rating.rating__avg %}{{p.average_rating.rating__avg}}{% else %}0{% endif %}" style = "margin = 0px;">
+                                        <script>
+                                            $("#rec_average_rating_{{forloop.counter0}}").rating({min:0, max:5, step:0.5,
+                                                                                     size:'sm',starCaptions:(val)=>{return `${val} (Dựa trên {% if p.average_rating.author__count %}{{p.average_rating.author__count}}{% else %}0{% endif %} lượt đánh giá)`},
+                                                                                     displayOnly:true});
+                                        </script>
+
+                                        <h5>{{p.store.name}}</h5>
+                                        <h5 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{ p.store.location.address}}</h5>
+                                        {% if p.store.is_open %}
+                                            <h5 style="color:green">Mở cửa</h5>
+                                        {% endif %}
+                                        <h5>{{ p.price }}</h5>
+
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class = "row product-section" style = "width:65vw; left:15vw;">
@@ -306,6 +381,7 @@
                         <script src="{% static 'js/product-map.js' %}"></script>
                     </div>
 
+                </div>
                 </div>
 
 

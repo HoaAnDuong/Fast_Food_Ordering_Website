@@ -94,7 +94,7 @@
                                         <input type = "hidden" id="store_{{ forloop.counter0 }}_lng" value = {{item.location.lng}}>
                                         <input type = "hidden" id="store_{{ forloop.counter0 }}_address" value = "{{item.location.address}}">
                                     </td>
-                                    {% if order_product.status.code == "submitted" %}
+
                                     <td>
                                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#store_{{ forloop.counter0 }}_modal">
                                             Nhận món
@@ -249,7 +249,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    {% endif %}
+
                                 </tr>
 
                                 {% endfor %}

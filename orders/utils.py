@@ -14,7 +14,7 @@ def current_order_expire_check(user):
         user.profile.save()
 
 def create_new_order(user):
-    if user.profile.current_order == None:
+    if user.profile.current_order == None or user.profile.current_order.order_status.code == "cancelled" or user.profile.current_order.order_status.code  == "completed":
         user.profile.current_order = create_order(user)
         user.profile.save()
     return user.profile.current_order
@@ -33,8 +33,10 @@ def create_order(user):
         order = Order.objects.create(customer=user,destination=new_location,
                                      payment_status=unpaid_status,delivery_status = delivery_pending_status,
                                      order_status = order_pending_status)
+        order.logs.create(log = f"{order.created.__str__()}: Đơn hàng đã được khởi tạo")
         user.profile.current_order = order
         user.profile.save()
+        print(user.profile.current_order)
         return order
     else:
         raise ValidationError("Bạn không phải là Khách Hàng, bạn không thể tạo ra một đơn hàng mới.")

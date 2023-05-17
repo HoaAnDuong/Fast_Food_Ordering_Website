@@ -35,7 +35,7 @@ class Product_Status(models.Model):
 
 class Product(models.Model):
     name = models.TextField(max_length=255)
-    desciption = models.TextField(max_length=2048,blank = True)
+    description = models.TextField(max_length=2048,blank = True)
     store = models.ForeignKey(Store,on_delete=models.CASCADE,null=True,related_name="products")
     price = MoneyField(max_digits=256,decimal_places=2,default = 0,default_currency='VND')
     new_price = MoneyField(max_digits=256,decimal_places=2,default = 0,default_currency='VND')
@@ -84,9 +84,33 @@ class Product(models.Model):
         if image != None:
             image_upload('reviews', review, image)
         review.save()
+    def delete_product(self):
+        if self.status.code != "pending":
+            raise ValidationError("Không thể xóa món này")
+        self.delete()
+    def disable_product(self):
+        if self.status.code != "active":
+            raise ValidationError("Không thể khóa món này")
+        self.status = Product_Status.objects.get(code = "disabled")
+        self.save()
 
+    def active_product(self):
+        if self.status.code != "disabled":
+            raise ValidationError("Không thể mở khóa món này")
+        self.status = Product_Status.objects.get(code = "active")
+        self.save()
 
-
+    def update_product(self,request):
+        print(request)
+        self.name = request.POST.get("name")
+        self.price.amount = float(request.POST.get("price"))
+        self.description = request.POST.get("description")
+        self.category = Category.objects.get(id = request.POST.get('category_id'))
+        self.save()
+    def image_upload(self,request):
+        image = request.FILES.get("image")
+        if image != None:
+            image_upload('products', self, image)
 
 
 class Product_Review(models.Model):

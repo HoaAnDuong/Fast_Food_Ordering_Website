@@ -9,6 +9,11 @@
                     <li><a href="/current-store/order-product/1">Các món đang được đặt</a></li>
                 </ul>
                 <br>
+                <ul class="pagination" style = "display:flex;">
+                    {% for i in page_range %}
+                    <li {% if page.number == i %}class="active"{% endif %}><a href = "/current-store/product-list/{{i}}">{{i}}</a></li>
+                    {% endfor %}
+                </ul>
                 <table class = "table table-hover" style = "width: 50vw;">
                     <thead>
                         <tr>
@@ -17,25 +22,179 @@
                             <th>Loại món</th>
                             <th>Trạng thái</th>
                             <th>Đơn giá</th>
+                            <th>Đánh giá</th>
+                            <th>Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for product in page %}
                         <tr>
-                            <td>{{product.name}}</td>
+                            <td><a href = "/current-store/product/{{product.slug}}">{{product.name}}</a></td>
                             <td><img style = "width:100px; height:62px;" src = "{{product.image.url}}"></td>
                             <td>{{product.category.name}}</td>
                             <td>{{product.status}}</td>
                             <td>{{product.price}}</td>
+                            <td>
+                                <input id="rating_product_{{forloop.counter0}}" type="text" name = "rating" value = "{% if product.average_rating.rating__avg %}{{product.average_rating.rating__avg}}{% else %}0{% endif %}">
+                                <script>
+                                    $("#rating_product_{{forloop.counter0}}").rating({min:0, max:5, step:0.5,
+                                                                             size:'sm',starCaptions:(val)=>{return `${val} ({% if product.average_rating.author__count %}{{product.average_rating.author__count}}{% else %}0{% endif %} lượt đánh giá)`},
+                                                                             displayOnly:true});
+                                </script>
+                            </td>
+                            <td>
+                                {% if product.status.code == "pending" %}
+                                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#delete_product_{{forloop.counter0}}_modal">
+                                    Xóa món
+                                </button>
+                                <div id = "delete_product_{{forloop.counter0}}_modal" class = "modal fade in" role="dialog">
+                                    <div class="modal-dialog">
+                                        {% if user.is_authenticated %}
+                                            {% if product.store == user.store %}
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                        <h4 class="modal-title">
+                                                            Xóa món: {{product.name}} - Số lượng: {{order_product.quantity}}
+                                                        </h4>
+                                                </div>
+                                                <form></form>
+                                                <form></form>
+                                                <form method = "POST">
+                                                    {% csrf_token %}
+                                                        <div class = "modal-body">
+                                                            <input type = "hidden" name = "form_tag" value = "delete_product" readonly>
+                                                            <input type = "hidden" name = "id" value = "{{ forloop.counter0 }}" readonly>
+                                                            <h4>Bạn có chắc chắn muốn xóa món {{product.name}}?</h4>
+                                                        </div>
+
+                                                        <div class="modal-footer">
+                                                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                        </div>
+                                                </form>
+                                            </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                        <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <label>Bạn cần phải đăng nhập để làm việc này</label>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% elif product.status.code == "active" %}
+                                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#disable_product_{{forloop.counter0}}_modal">
+                                    Khóa món
+                                </button>
+                                <div id = "disable_product_{{forloop.counter0}}_modal" class = "modal fade" role="dialog">
+                                    <div class="modal-dialog">
+                                        {% if user.is_authenticated %}
+                                            {% if product.store == user.store %}
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                        <h4 class="modal-title">
+                                                            Khóa món: {{product.name}} - Số lượng: {{order_product.quantity}}
+                                                        </h4>
+                                                </div>
+                                                <form></form>
+                                                <form></form>
+                                                <form method = "POST">
+                                                    {% csrf_token %}
+                                                        <div class = "modal-body">
+                                                            <input type = "hidden" name = "form_tag" value = "disable_product" readonly>
+                                                            <input type = "hidden" name = "id" value = "{{ forloop.counter0 }}" readonly>
+                                                            <h4>Bạn có chắc chắn muốn khóa món {{product.name}}?</h4>
+                                                        </div>
+
+                                                        <div class="modal-footer">
+                                                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                        </div>
+                                                </form>
+                                            </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                        <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <label>Bạn cần phải đăng nhập để làm việc này</label>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% elif product.status.code == "disabled" %}
+                                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#active_product_{{forloop.counter0}}_modal">
+                                    Mở khóa
+                                </button>
+                                <div id = "active_product_{{forloop.counter0}}_modal" class = "modal fade" role="dialog">
+                                    <div class="modal-dialog">
+                                        {% if user.is_authenticated %}
+                                            {% if product.store == user.store %}
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                        <h4 class="modal-title">
+                                                            Mở khóa món: {{product.name}} - Số lượng: {{order_product.quantity}}
+                                                        </h4>
+                                                </div>
+                                                <form></form>
+                                                <form></form>
+                                                <form method = "POST">
+                                                    {% csrf_token %}
+                                                        <div class = "modal-body">
+                                                            <input type = "hidden" name = "form_tag" value = "active_product" readonly>
+                                                            <input type = "hidden" name = "id" value = "{{ forloop.counter0 }}" readonly>
+                                                            <h4>Bạn có chắc chắn muốn mở khóa món {{product.name}}?</h4>
+                                                        </div>
+
+                                                        <div class="modal-footer">
+                                                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                        </div>
+                                                </form>
+                                            </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                        <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <label>Bạn cần phải đăng nhập để làm việc này</label>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </td>
                         </tr>
-                        {% endfor%}
+                        {% endfor %}
                     </tbody>
                 </table>
-                <ul class="pagination" style = "display:flex;">
-                    {% for i in page_range %}
-                    <li {% if page.number == i %}class="active"{% endif %}><a href = "/store/product-list/{{i}}">{{i}}</a></li>
-                    {% endfor %}
-                </ul>
+                <button onclick = "window.location.replace('/current-store/create-product')">Thêm món mới</button>
+
 
             {% else %}
                 <meta http-equiv="refresh" content="1; url='/'" />

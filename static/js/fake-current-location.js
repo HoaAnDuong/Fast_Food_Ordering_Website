@@ -58,6 +58,10 @@ async function currentLocationRefresh(){
             success: function(data){
                let json = $.parseJSON(data);
                console.log(json);
+               if(document.getElementById("delivery_check").value != json.delivery_check){
+                   document.getElementById("delivery_check").value = json.delivery_check;
+                   alert(json.delivery_check == "True" ? "Bạn đang có đơn vận chuyển mới." : "Đơn vận chuyển của bạn đã kết thúc.");
+               }
             },
             error: function(data){
                let json = $.parseJSON(data);

@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 import datetime
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from locations.utils import distance
+from djmoney.money import Money
+from foodapp.utils import image_upload
 
 
 WEEKDAYS = [
@@ -84,6 +86,23 @@ class Store(models.Model):
 		self.location.subregion_1 = request.POST.get("subregion_1")
 		self.location.subregion_2 = request.POST.get("subregion_2")
 		self.location.save()
+
+	def create_product(self,request,status,category):
+		name = request.POST.get("name")
+		price = float(request.POST.get("price"))
+		description = request.POST.get("description")
+		image = request.FILES.get("image")
+		slug = f"{name.replace(' ','-')}-{self.slug}"
+
+		product = self.products.create(name = name,price = Money(price,'VND'),description = description,
+									   category = category,store=self,status=status,slug = slug)
+
+		if image != None:
+			image_upload('products',product,image)
+
+		product.save()
+
+
 
 class Store_Opening_Hours(models.Model):
 	store = models.ForeignKey(Store,on_delete=models.CASCADE,related_name="opening_hours")

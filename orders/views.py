@@ -25,9 +25,11 @@ def CurrentOrderView(request):
         if request.method == "POST":
             match request.POST.get("form_tag"):
                 case "create_order":
+                    print("Đang tạo đơn hàng mới")
+                    current_order = create_new_order(request.user)
                     if not hasattr(current_order,'delivery'):
                         Delivery.objects.create(order = current_order,status = Delivery_Status.objects.get(code="pending"))
-                    create_new_order(request.user)
+
                 case "update_order":
                     if not hasattr(current_order,'delivery'):
                         Delivery.objects.create(order = current_order,status = Delivery_Status.objects.get(code="pending"))
@@ -102,6 +104,7 @@ def GetCurrentOrderData(request):
         if not request.user.is_anonymous:
             current_order = request.user.profile.current_order
             if current_order:
+
                 current_order.calculate_total()
                 ctx = {
                     "order_status":current_order.order_status.code,

@@ -81,7 +81,8 @@ def CurrentLocation(request):
     if request.method == 'POST':
         request.user.deliverer_profile.update_current_location(request)
         return HttpResponse(json.dumps({
-            "message": "Current location posted successfully."
+            "message": "Current location posted successfully.",
+            "delivery_check": f"{request.user.deliverer_profile.current_delivery != None}"
         },indent=4),status = 200)
     return Http404()
 

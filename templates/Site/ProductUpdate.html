@@ -1,0 +1,121 @@
+{% extends 'Site/index.html' %}
+{% block content %}
+<div class = "container-fluid">
+        {% if user.is_authenticated %}
+            {% if user.store %}
+            <br>
+            <button onclick = "window.location.replace('/current-store/product-list/1')" class = "btn">Trở lại</button>
+            <hr>
+            <ul class="col-md-2 nav nav-pills nav-stacked">
+                <li class="active"><a data-toggle = "tab" href="#profile">Thông tin</a></li>
+                <li><a data-toggle = "tab" href="#reviews">Các bài đánh giá</a></li>
+                <li><a data-toggle = "tab" href="#statistic">Thống kê</a>
+            </ul>
+            <div class = "col-md-8 tab-content">
+                <div class = "tab-pane fade in active" id = "profile">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <h3>Hình ảnh</h3>
+                        <input type = "hidden" name = "form_tag" value = "image_upload" readonly>
+                        <div class = "form-group">
+                            <img id = "store_avatar" src = "{% if product.image %}{{product.image.url}}{% endif %}" style = "width:30vw; height:18.54vw;">
+                        </div>
+
+                        <div>
+                            <input type="file" name="image" id = "image_upload" accept="image/*" id="id_avatar">
+                        </div>
+                        <script>
+                            $("#image_upload").change(function() {
+                                input = this;
+                                if (input.files && input.files[0]) {
+                                    var reader = new FileReader();
+                                    reader.onload = function(e) {
+                                      $("#store_avatar").attr('src', e.target.result);
+                                      $("#store_avatar").attr("style", "width:30vw; height:18.54vw;");
+                                    }
+                                    reader.readAsDataURL(input.files[0]);
+                                }
+                            });
+                        </script>
+                        {% if error == "avatar" %}
+                        {% for msg in messages %}
+                            <small style="color:red">{{msg}}</small>
+                            <br>
+                        {% endfor %}
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                    </form>
+                    <form method = "POST" name="profile">
+                            {% csrf_token %}
+                            <h3>Thông tin cơ bản</h3>
+                            <input type = "hidden" name = "form_tag" value = "product_update" readonly>
+                            <div class = "form-group">
+                                <h4>Trạng thái:</h4>
+                                <label>{{product.status.code}}</label>
+                            </div>
+                            <div class = "form-group">
+                                <label>Tên<br></label>
+                                <input type="text" name = "name" value = "{{product.name}}">
+                            </div>
+                            <div class = "form-group">
+                                <label>Giá({{product.price.currency}})<br></label>
+                                <input type="text" name = "price" value = "{{product.price.amount}}">
+                            </div>
+                            <div class = "form-group">
+                                <label>Loại món:<br></label>
+                                <select name = "category_id">
+                                    {% for category in categories%}
+                                    <option value = "{{category.id}}" {% if category.id == product.category.id%}selected{% endif %}>{{category.name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class = "form-group">
+                                <label>Mô tả</label>
+                                <br>
+                                <textarea name = "description" style = "width:500px; height:250px">{{product.description}}</textarea>
+                            </div>
+                            {% if error == "store" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+
+                        </form>
+                </div>
+                <div class = "tab-pane fade in" id = "reviews">
+                    {% if page_range %}
+                    <ul class="pagination" style = "display:flex;" id = "review_pagination">
+
+                        {% for i in page_range %}
+                        <li onclick = "reviewsRefresh({{i}});" {% if i == 1 %}class="active"{% endif %}><a>{{i}}</a></li>
+                        {% endfor %}
+                    </ul>
+                    <button onclick = "reviewsRefresh(1);" class = "btn">Tải lại</button>
+                    <input type="hidden" id = "slug" value = "{{product.slug}}" readonly>
+                    <input type="hidden" id = "page_id" value = "1" readonly>
+                    <div id = "reviews_section">
+                    </div>
+                        {% load static %}
+                        <script src = "{% static 'js/product-reviews.js'%}"></script>
+                    {% else %}
+                    <h3>Hiện tại chưa có bình luận nào cho món này.</h3>
+                    {% endif %}
+
+                </div>
+            </div>
+            {% else %}
+            <meta http-equiv="refresh" content="1; url='/'" />
+            <div>
+                <h3>Bạn không phải chủ cửa hàng, không thể thực hiện chức năng này</h3>
+            </div>
+            {% endif %}
+        {% else %}
+            <meta http-equiv="refresh" content="1; url='/login'" />
+            <div>
+                <h3>You are not logged in now, so you will be directed to Login Page</h3>
+            </div>
+        {% endif %}
+</div>
+{% endblock %}

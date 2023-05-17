@@ -3,13 +3,25 @@
     <div class = "container-fluid">
         {% if user.is_authenticated %}
             {% if user.store %}
+                {% load static %}
+                <input type="hidden" name="page_id" id="page_id" value = {{page.number}}>
                 <ul class="nav nav-tabs">
                     <li><a href="/current-store">Thông tin Cửa hàng</a></li>
                     <li><a href="/current-store/product-list/1">Danh sách Món ăn</a></li>
                     <li class="active"><a href="/current-store/order-product/1">Các món đang được đặt</a></li>
                 </ul>
                 <br>
-        <table class = "table table-hover">
+                <h4>Lựa chọn</h4>
+                <select id = "cmbChartType">
+                    <option value = "hour" selected>Trong Ngày</option>
+                    <option value = "day">Trong Tháng</option>
+                    <option value = "month">Trong Năm</option>
+                </select>
+                <div id = "chart_section" style = "width:100vw;height:60vh;margin-bottom:100px">
+
+                </div>
+                <h4>Số món đang chờ hiện tại: <b id="num_submitted_product"></b></h4>
+                <table class = "table table-hover" id = "order_product_table">
                     <thead>
                         <tr>
                             <th>Tên</th>
@@ -27,13 +39,13 @@
                     <tbody>
                         {% for order_product in page %}
                         <tr>
-                            <td>{{order_product.product.name}}</td>
+                            <td><a href = "/product/{{order_product.slug}}">{{order_product.product.name}}</a></td>
                             <td><img style = "width:100px; height:62px;" src = "{{order_product.product.image.url}}"></td>
                             <td>{{order_product.quantity}}</td>
                             <td>{{order_product.price}}</td>
                             <td>{{order_product.total}}</td>
-                            <td>{{order_product.created}}</td>
-                            <td>{{order_product.updated}}</td>
+                            <td></td>
+                            <td></td>
                             <td>{{order_product.status.code}}</td>
                             <td>{{order_product.order.destination.address}}</td>
                             <td>
@@ -76,7 +88,7 @@
                                                         <h4 class="modal-title">Yêu cầu đăng nhập</h4>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <label>Bạn cần phải đăng nhập để giao hàng</label>
+                                                    <label>Bạn cần phải đăng nhập để hủy món</label>
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
@@ -91,12 +103,13 @@
                         {% endfor%}
                     </tbody>
                 </table>
-                <input type="hidden" name="page_id" value = page.number>
+
                 <ul class="pagination" style = "display:flex;">
                     {% for i in page_range %}
-                    <li {% if page.number == i %}class="active"{% endif %}><a href = "/store/product-list/{{i}}">{{i}}</a></li>
+                    <li {% if page.number == i %}class="active"{% endif %}><a href = "/current-store/product-list/{{i}}">{{i}}</a></li>
                     {% endfor %}
                 </ul>
+                <script type="text/javascript" src="{% static 'js/store-order-products.js' %}"></script>
             {% else %}
                 <meta http-equiv="refresh" content="1; url='/'" />
                 <div>

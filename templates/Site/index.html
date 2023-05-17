@@ -52,9 +52,6 @@
             <li><a href="/routing-test">Routing Test</a></li>
         </ul>
           {% if not user.is_authenticated %}
-
-
-
           <a href="/login">
               <button class = "btn btn-custom navbar-btn">Log In</button>
           </a>
@@ -151,9 +148,10 @@
 
         <form id = "current-location-form">
             {% csrf_token %}
-            <input type = "hidden" name = "form_tag" value = "register" readonly>
+            <input type = "hidden" name = "form_tag" value = "current_location" readonly>
             <input type = "hidden" id = "current_lat" name="current_lat" value = "{{user.deliverer_profile.current_location.lat}}" readonly>
             <input type = "hidden" id = "current_lng" name="current_lng" value = "{{user.deliverer_profile.current_location.lng}}" readonly>
+            <input type = "hidden" id = "delivery_check" readonly>
             <input type = "hidden" id = "timestamp" name="timestamp">
         </form>
 
@@ -182,12 +180,16 @@
             <script type="text/javascript" src="{% static 'js/fake-current-location.js' %}"></script>
         </nav>
         {% elif user.profile.is_store_owner %}
-        <input type="hidden" name="latest_product_name">
-        <input type="hidden" name="latest_product_quantity">
-        <input type="hidden" name="latest_product_status">
-        <input type="hidden" name="latest_product_updated">
-        <input type="hidden" name="latest_product_price">
+        <form id = "latest-product-form">
+            {% csrf_token %}
+            <input type="hidden" id="latest_order_product_name">
+            <input type="hidden" id="latest_order_product_quantity">
+            <input type="hidden" id="latest_order_product_status">
+            <input type="hidden" id="latest_order_product_updated">
+            <input type="hidden" id="latest_order_product_price">
+            <script type="text/javascript" src="{% static 'js/latest-product.js' %}"></script>
         {% endif %}
+        </form>
 
     {% endif %}
 

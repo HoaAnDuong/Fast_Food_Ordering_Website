@@ -16,15 +16,11 @@
 
 
             <div class = "col-md-12">
-                <div class = "row" style="margin-bottom:20px">
+                <div class = "row">
                 {% for p in page.object_list %}
 
-                    {% if forloop.counter0|divisibleby:"5" %}
-                    </div>
-                    <div class = "row" style="margin-bottom:20px">
-                    {% endif %}
 
-                    <div class = "col-md-2 product-card" style="margin:20px">
+                    <div class = "col-md-2 product-card" style="margin:50px;">
                         <div style = "border-style:solid; border-width: thin; width: 202px;">
                             <img class = 'product-image' src="{{ p.image.url }}">
                         </div>

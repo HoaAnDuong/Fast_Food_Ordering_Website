@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'stores',
     'products',
     'delivery',
+    'moderating',
     'phonenumbers',
     'djmoney',
 ]

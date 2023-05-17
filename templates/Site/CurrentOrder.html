@@ -4,8 +4,9 @@
         {% if user.is_authenticated %}
             {% if current_order %}
             <ul class="nav nav-tabs">
-              <li><a href="/profile">Thông tin</a></li>
-              <li class="active"><a href="/current-order">Đơn hàng hiện tại</a></li>
+                <li><a href="/profile">Thông tin</a></li>
+                <li class = "active"><a href="/current-order">Đơn hàng hiện tại</a></li>
+                <li><a href="/order-list">Các đơn hàng đã đặt</a></li>
             </ul>
             <br>
 
@@ -433,6 +434,7 @@
                             </tfoot>
 
                         </table>
+
                     </form>
 
                 </div>

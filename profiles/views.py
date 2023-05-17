@@ -6,7 +6,9 @@ from .utils import *
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from .models import Profile,Gender,User_Status
 from foodapp.utils import avatar_change
+from orders.models import Order,Payment_Method
 import os
+from django.core.paginator import Paginator
 
 # Create your views here.
 
@@ -70,3 +72,24 @@ def ProfileView(request):
         ctx["profile"] = profile
 
     return render(request,"Site/Profile.html",ctx)
+
+def OrderView(request,page_id):
+    ctx = {}
+    current_order = Order.objects.filter(customer = request.user).order_by('-updated')[page_id - 1]
+    ctx["remain_cancellations"] = request.user.profile.remain_cancellations
+    ctx["current_order"] = current_order
+    ctx["payment_methods"] = Payment_Method.objects.all()
+    if current_order and current_order.order_status.code != "pending" and current_order.order_status.code != "expired":
+        route = current_order.delivery.points.all().order_by('priority')
+
+        ctx["route"] = {}
+        ctx["route"]["start"] = route[0]
+        ctx["route"]["destination"] = route[len(route) - 1]
+        ctx["route"]["stores"] = route[1:len(route) - 1]
+    return render(request, "Site/OrderView.html", ctx)
+def OrderListView(request):
+    ctx = {}
+    orders = Order.objects.filter(customer = request.user).order_by('-updated')
+    paginator = Paginator(orders, 10)
+    ctx["page_range"] = range(1, paginator.num_pages + 1) if len(orders) != 0 else None
+    return render(request, "Site/OrderView.html",ctx)

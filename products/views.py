@@ -20,6 +20,8 @@ def ProductDetailView(request,slug):
     product = Product.objects.get(slug = slug)
     ctx["product"] = product
     ctx["average_rating"] = product.average_rating
+    ctx["recommended_products"] = recommended_products(user=request.user)[:10]
+    ctx["store_products"] = Product.objects.filter(store = product.store)
     if not request.user.is_anonymous:
         ctx["purchased_product"] = request.user.profile.purchased_product(product)
         ctx["user_review"] = request.user.profile.get_review(product)

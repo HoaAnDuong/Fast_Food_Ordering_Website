@@ -6,7 +6,7 @@ import math
 
 def recommended_products(user,*args,**kwargs):
     if user.is_anonymous:
-        return Product.objects.filter(store__status__code = "active")
+        return Product.objects.filter(store__status__code = "active",status__code = "active")
 
     else:
         if user.profile.current_order!=None:
@@ -15,7 +15,7 @@ def recommended_products(user,*args,**kwargs):
             current_location = user.profile.location
 
         products = Product.objects.all().exclude(store__user=user) \
-                    .filter(store__status__code = "active") \
+                    .filter(store__status__code = "active",status__code = "active") \
                     .annotate(distance=(((F("store__location__lat") - current_location.lat) ** 2.
                                         + (F("store__location__lng") - current_location.lng) ** 2.)
                                        ** 0.5 * 111.319)) \
@@ -31,7 +31,7 @@ def searched_products(user,search_keyword,*args,**kwargs):
     for i in range(1,len(keyword_list)):
         search_query = search_query & Q(name__contains=keyword_list[i])
     if user.is_anonymous:
-        return Product.objects.filter(store__status__code = "active") \
+        return Product.objects.filter(store__status__code = "active",status__code = "active") \
                                 .filter(search_query)
     else:
         if user.profile.current_order!=None:
@@ -40,7 +40,7 @@ def searched_products(user,search_keyword,*args,**kwargs):
             current_location = user.profile.location
 
         products = Product.objects.all().exclude(store__user=user)\
-                    .filter(store__status__code = "active") \
+                    .filter(store__status__code = "active",status__code = "active") \
                     .filter(search_query)\
                     .annotate(distance=(((F("store__location__lat") - current_location.lat) ** 2.
                                         + (F("store__location__lng") - current_location.lng) ** 2.)

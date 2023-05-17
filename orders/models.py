@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models import Q
 from locations.models import Location
 from products.models import Product,Product_Review
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
@@ -123,28 +122,29 @@ class Order(models.Model):
         else:
             return False
     def calculate_total(self):
-        self.total = 0
-        self.product_total = 0
-        self.delivery_fee = 0
-        self.nighttime_fee = 0
-        for i in self.order_products.all():
-            if i.status.code != "cancelled":
-                self.product_total += i.total
-        self.total += self.product_total
+        if self.order_status != "completed" and self.order_status != "ghosted" and self.order_status != "completed":
+            self.total = 0
+            self.product_total = 0
+            self.delivery_fee = 0
+            self.nighttime_fee = 0
+            for i in self.order_products.all():
+                if i.status.code != "cancelled":
+                    self.product_total += i.total
+            self.total += self.product_total
 
-        total_length = self.shortest_path()["total_length"] if not hasattr(self,'delivery') or self.delivery.total_length == 0 else self.delivery.total_length
-        self.delivery_fee += Money(12000,'VND')
-        if total_length > 2:
-            self.delivery_fee += (total_length-2) * Money(4000,'VND')
-        self.total += self.delivery_fee
+            total_length = self.shortest_path()["total_length"] if not hasattr(self,'delivery') or self.delivery.total_length == 0 else self.delivery.total_length
+            self.delivery_fee += Money(12000,'VND')
+            if total_length > 2:
+                self.delivery_fee += (total_length-2) * Money(4000,'VND')
+            self.total += self.delivery_fee
 
-        now_hour = datetime.datetime.now().time()
+            now_hour = datetime.datetime.now().time()
 
-        if now_hour >= datetime.time(19,0,0) or now_hour <= datetime.time(6,0,0):
-            self.nighttime_fee = Money(8000,'VND')
-        self.total += self.nighttime_fee
+            if now_hour >= datetime.time(19,0,0) or now_hour <= datetime.time(6,0,0):
+                self.nighttime_fee = Money(8000,'VND')
+            self.total += self.nighttime_fee
 
-        self.save()
+            self.save()
         return self.total
 
     def shortest_path(self,with_start_pos=True):

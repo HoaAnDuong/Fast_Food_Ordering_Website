@@ -43,6 +43,10 @@
                                 <label>{{store.status.code}}</label>
                             </div>
                             <div class = "form-group">
+                                <h4>Đường dẫn:</h4>
+                                <label>{{store.slug}}</label>
+                            </div>
+                            <div class = "form-group">
                                 <label>Tên<br></label>
                                 <input type="text" name = "name" value = "{{store.name}}">
                             </div>
@@ -55,7 +59,8 @@
                                 <input type="text" name = "tax_identification" value = "{% if store.tax_identification %}{{store.tax_identification}}{% endif %}">
                             </div>
                             <div class = "form-group">
-                                <label>Mô tả<br></label>
+                                <label>Mô tả</label>
+                                <br>
                                 <textarea name = "description" style = "width:500px; height:250px">{{store.description}}</textarea>
                             </div>
                             {% if error == "store" %}

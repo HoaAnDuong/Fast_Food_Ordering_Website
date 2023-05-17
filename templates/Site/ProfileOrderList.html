@@ -1,0 +1,46 @@
+{% extends 'Site/index.html' %}
+{% block content %}
+    <div class = "container-fluid">
+        {% if user.is_authenticated %}
+            <ul class="nav nav-tabs">
+                <li><a href="/profile">Thông tin</a></li>
+                <li><a href="/current-order">Đơn hàng hiện tại</a></li>
+                <li class = "active"><a href="/order-list">Các đơn hàng đã đặt</a></li>
+            </ul>
+            <br>
+
+            <ul class="pagination" id = "order_pagination" style = "display:flex;">
+                {% for i in page_range %}
+                <li {% if page.number == i %}class="active"{% endif %} ><a href = "/current-store/product-list/{{i}}">{{i}}</a></li>
+                {% endfor %}
+            </ul>
+
+            <table class = "table table-hover" id ="order_table">
+                <thead>
+                    <tr>
+                        <td>Thời điểm khởi tạo</td>
+                        <td>Thời điểm nhận hàng</td>
+                        <td>Phương thức thanh toán</td>
+                        <td>Tình trạng đơn hàng</td>
+                        <td>Tình trạng vận chuyển</td>
+                        <td>Tình trạng thanh toán</td>
+                        <td>Tổng tiền</td>
+                        <td>Người giao hàng</td>
+                        <td>Tổng quảng đường vận chuyển</td>
+                        <td>Hành động</td>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+            {% load static %}
+            <script src = "{% static 'js/profile-order-list.js' %}"></script>
+        {% else %}
+            <meta http-equiv="refresh" content="1; url='/login'" />
+            <div>
+                <h3>You are not logged in now, so you will be directed to Login Page</h3>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
