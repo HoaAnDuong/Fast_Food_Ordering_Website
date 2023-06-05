@@ -99,7 +99,7 @@ function createGraph(){
 
             var labels = [];
 
-            for (var i = 1; i <= new Date(picker.valueAsDate.getYear(), picker.valueAsDate.getMonth(), 0).getDate()+1; i++) {
+            for (var i = 1; i < new Date(picker.valueAsDate.getYear(), picker.valueAsDate.getMonth() + 1, 0).getDate()+1; i++) {
               labels.push(i);
             }
 
@@ -341,7 +341,7 @@ function updateGraph(){
     if(cmbChartType.value == "day"){
         order_product_chart.data.labels = []
         order_product_chart.options.plugins.subtitle.text = picker.valueAsDate.toDateString();
-        for (var i = 1; i <= new Date(picker.valueAsDate.getYear(), picker.valueAsDate.getMonth(), 0).getDate()+1; i++) {
+        for (var i = 1; i < new Date(picker.valueAsDate.getYear(), picker.valueAsDate.getMonth() + 1, 0).getDate()+1; i++) {
             order_product_chart.data.labels.push(i);
         }
 

@@ -5,33 +5,34 @@
             <ul class="nav nav-tabs">
                 <li><a href="/profile">Thông tin</a></li>
                 <li><a href="/current-order">Đơn hàng hiện tại</a></li>
-                <li class = "active"><a href="/order-list">Các đơn hàng đã đặt</a></li>
+                <li class = "active"><a href="/profile/order-list">Các đơn hàng đã đặt</a></li>
             </ul>
             <br>
 
             <ul class="pagination" id = "order_pagination" style = "display:flex;">
                 {% for i in page_range %}
-                <li {% if page.number == i %}class="active"{% endif %} ><a href = "/current-store/product-list/{{i}}">{{i}}</a></li>
+                <li {% if i == 1 %}class="active"{% endif %} onclick = "orderListRefresh({{i}})"><a href = "/current-store/product-list/{{i}}">{{i}}</a></li>
                 {% endfor %}
             </ul>
 
             <table class = "table table-hover" id ="order_table">
                 <thead>
                     <tr>
-                        <td>Thời điểm khởi tạo</td>
-                        <td>Thời điểm nhận hàng</td>
-                        <td>Phương thức thanh toán</td>
-                        <td>Tình trạng đơn hàng</td>
-                        <td>Tình trạng vận chuyển</td>
-                        <td>Tình trạng thanh toán</td>
-                        <td>Tổng tiền</td>
-                        <td>Người giao hàng</td>
-                        <td>Tổng quảng đường vận chuyển</td>
-                        <td>Hành động</td>
+                        <th>Thời điểm khởi tạo</th>
+                        <th>Thời điểm nhận hàng</th>
+                        <th>Phương thức thanh toán</th>
+                        <th>Tình trạng đơn hàng</th>
+                        <th>Tình trạng vận chuyển</th>
+                        <th>Tình trạng thanh toán</th>
+                        <th>Tổng tiền</th>
+                        <th>Người giao hàng</th>
+                        <th>Tổng quảng đường vận chuyển</th>
+                        <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
-
+                    <tr>
+                    </tr>
                 </tbody>
             </table>
             {% load static %}

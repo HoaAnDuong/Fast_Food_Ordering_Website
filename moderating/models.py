@@ -8,6 +8,9 @@ from orders.models import Order
 
 class Complaint_Status(models.Model):
     code = models.CharField(max_length=20)
+    def __str__(self):
+        return self.code
+
 
 class Complaint(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='complaints')
@@ -16,15 +19,31 @@ class Complaint(models.Model):
     status = models.ForeignKey(Complaint_Status,on_delete=models.DO_NOTHING)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+    target_id = models.BigIntegerField(blank=True,null=True)
+    targer_type = models.CharField(max_length=255,default = "")
+    def create_complaint(self,request,instance):
+        pass
+class Action(models.Model):
+    code = models.CharField(max_length=20)
+    def __str__(self):
+        return self.code
+class Moderator_Changelog(models.Model):
+    moderator = models.ForeignKey(User,on_delete=models.CASCADE,related_name='changelogs')
+    action = models.ForeignKey(Action, on_delete=models.DO_NOTHING)
+    target_id = models.BigIntegerField(blank=True, null=True)
+    target_type = models.CharField(max_length=255, default="")
+    old_value = models.TextField(default = "")
+    new_value = models.TextField(default = "")
+    description = models.TextField(default = "",max_length=1024)
+    reason = models.TextField(default = "",max_length=256)
+    created = models.DateTimeField(auto_now_add=True)
 
-class Product_Complaint(models.Model):
-    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    def __str__(self):
+        return f"{self.moderator} {self.action} {self.target_type} {self.target_id}"
 
-class Store_Complaint(models.Model):
-    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE)
+    def create_changlog(self,request,instance):
+        pass
 
-class Order_Complaint(models.Model):
-    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE)
-    order = models.ForeignKey(Store, on_delete=models.CASCADE)
+
+
+

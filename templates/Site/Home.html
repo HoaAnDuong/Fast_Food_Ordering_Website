@@ -6,9 +6,11 @@
     <div class = "container-fluid" style = "margin:0px;padding:0px;">
         <img src = "{% static 'background.webp' %}" style = "position:absolute; width:100vw; height:100vh; object-fit: cover;">
         <div style = "position: relative;
-        transform: translate(-204px, 0);
-        left:50vw; top:10vw; z-index:10000">
-            <h2 style="color:white;">Đặt hàng nhanh chóng, giao hàng tận nơi</h2>
+        margin: auto;
+        margin-top: 15vh;
+        width: 50%;
+        height:20%; z-index:10">
+            <h2 style="color:white;left:-20%">Đặt hàng nhanh chóng, giao hàng tận nơi</h2>
             <div class = "center" style = "display: flex; justify-content: flex-start;">
 
                 <input id = "search_bar" type = "text" style = "height:36px; width:360px; text-align:center;" maxlength="128">
@@ -28,6 +30,50 @@
                           }
                         });
                 </script>
+            </div>
+
+        </div>
+        <div class = "col-md-12" style = "position: relative;
+        margin: auto;
+        margin-top: 10vh;
+        left: 5%;
+        width: 90%;
+        text-align:center;
+        height:60vh;z-index:10; background-color: #FFFFFF">
+            <div class = "row" style="">
+            {% for p in page.object_list %}
+
+
+                <div class = "col-md-2 product-card" style="margin:20px;margin-bottom:20px">
+                    <div style = "border-style:solid; border-width: thin; width: 202px;">
+                        <img class = 'product-image' src="{{ p.image.url }}">
+                    </div>
+                    <div style = "border-style:solid; border-width: thin; width: 202px;">
+                        <a href = "/product/{{ p.slug }}"><h4 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{ p.name }}</h4></a>
+                    </div>
+                    <div style = "border-style:solid; border-width: thin; width: 202px;">
+                        <input id="rating_product_{{forloop.counter0}}" type="text" name = "rating" value = "{% if p.average_rating.rating__avg %}{{p.average_rating.rating__avg}}{% else %}0{% endif %}">
+                        <script>
+                            $("#rating_product_{{forloop.counter0}}").rating({min:0, max:5, step:0.5,
+                                                                     size:'sm',starCaptions:(val)=>{return `${val} ({% if p.average_rating.author__count %}{{p.average_rating.author__count}}{% else %}0{% endif %} lượt đánh giá)`},
+                                                                     displayOnly:true});
+                        </script>
+                    </div>
+                    <div style = "border-style:solid; border-width: thin; width: 202px;">
+                        <h5>{{ p.store.name }}</h5>
+                        <h5 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{p.store.location.address}}</h5>
+                        {% if p.distance %}
+                            <h5>{{ p.distance }}km</h5>
+                        {% endif %}
+                        {% if p.store.is_open %}
+                            <h5 style="color:green">Mở cửa</h5>
+                        {% endif %}
+                        <h5>{{ p.price }}</h5>
+                    </div>
+                </div>
+
+
+            {% endfor %}
             </div>
         </div>
     </div>

@@ -13,8 +13,33 @@ import json
 from django.db.models import Q
 import calendar
 from django.views.decorators.csrf import csrf_protect
-
+from django.db.models import Avg,Count,Sum
+from .utils import recommended_stores
+from products.utils import recommended_products
 # Create your views here.
+
+def StoreDetailView(request,slug):
+    ctx = {}
+    store = Store.objects.get(slug = slug)
+    ctx["store"] = store
+    ctx["recommended_products"] = recommended_products(user=request.user)[:10]
+    ctx["store_products"] = Product.objects.filter(store = store)
+
+    return render(request, 'Site/StoreDetail.html',ctx)
+
+def StoreListView(request,page_id=1):
+
+    product = recommended_stores(request)
+    paginator = Paginator(product, 20)
+    page = paginator.get_page(page_id)
+    return StoreBaseListView(request,paginator,page,{})
+def StoreBaseListView(request,paginator,page,ctx):
+    ctx = ctx
+
+    ctx["page"] = page
+    ctx["page_range"] = range(1,paginator.num_pages+1)
+
+    return render(request,'Site/StoreList.html',ctx)
 
 def StoreView(request):
     ctx = {}
@@ -139,7 +164,7 @@ def ProductUpdateView(request,slug):
     ctx["product"] = product
     ctx["categories"] = categories
 
-    reviews = Product_Review.objects.filter(product__store=store)
+    reviews = Product_Review.objects.filter(product__slug = slug)
     paginator = Paginator(reviews, 10)
     ctx["page_range"] = range(1, paginator.num_pages + 1) if len(reviews) != 0 else None
 
@@ -154,12 +179,316 @@ def ProductUpdateView(request,slug):
 
     return render(request, "Site/ProductUpdate.html", ctx)
 
+def GetProductStatistic(request,slug):
+    ctx = {}
+    if request.method == "POST":
+        if request.user.profile.is_store_owner:
+            product = Product.objects.get(slug=slug,store=request.user.store)
+            match request.POST.get('statistic_tag'):
+                case "hour":
+                    selected_date = datetime.datetime.fromisoformat(request.POST.get('statistic_data')).date()
+
+                    order_products = Order_Product.objects.filter(product=product,updated = selected_date).exclude(status__code="pending")
+                    completed_order_product = order_products.exclude(Q(status__code="submitted")|Q(status__code="cancelled")|Q(status__code="ghosted"))
+
+                    store_order_products = Order_Product.objects.filter(updated=selected_date).exclude(
+                        status__code="pending")
+                    store_completed_order_product = store_order_products.exclude(
+                        Q(status__code="submitted") | Q(status__code="cancelled") | Q(status__code="ghosted"))
+
+                    ctx["statistic"] = {
+                        "completed":{
+                            "store_total": store_completed_order_product.aggregate(Sum('total'))["total__sum"],
+                            "total": completed_order_product.aggregate(Sum('total'))["total__sum"],
+                            "store_order_count": store_completed_order_product.aggregate(Count('order'))["order__count"],
+                            "order_count": completed_order_product.aggregate(Count('order'))["order__count"],
+                            "quantity":completed_order_product.aggregate(Sum('quantity'))["quantity__sum"]
+                        },
+                        "submitted":{
+                            "store_total": store_order_products.filter(status__code="submitted").aggregate(Sum('total'))[
+                                "total__sum"],
+                            "total":order_products.filter(status__code="submitted").aggregate(Sum('total'))["total__sum"],
+                            "store_order_count": store_order_products.filter(status__code="submitted").aggregate(Count('order'))[
+                                "order__count"],
+                            "order_count":order_products.filter(status__code="submitted").aggregate(Count('order'))["order__count"],
+                            "quantity": order_products.filter(status__code="submitted").aggregate(Sum('quantity'))[
+                                "quantity__sum"]
+                        },
+                        "cancelled": {
+                            "store_total": store_order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Sum('total'))["total__sum"],
+                            "total": order_products
+                            .filter(Q(status__code="cancelled")|Q(status__code="ghosted"))
+                            .aggregate(Sum('total'))["total__sum"],
+                            "store_order_count": store_order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Count('order'))["order__count"],
+                            "order_count": order_products
+                            .filter(Q(status__code="cancelled")|Q(status__code="ghosted"))
+                            .aggregate(Count('order'))["order__count"],
+                            "quantity": order_products
+                            .filter(Q(status__code="cancelled")|Q(status__code="ghosted"))
+                            .aggregate(Sum('quantity'))["quantity__sum"],
+                        }
+                    }
+
+                    ctx["data"] = [
+                        {
+                            "completed":{
+                                "total":completed_order_product.filter(updated__hour = hour).aggregate(Sum('total'))["total__sum"],
+                                "order_count":completed_order_product.filter(updated__hour = hour).aggregate(Count('order'))["order__count"],
+                                "quantity": completed_order_product.filter(updated__hour=hour).aggregate(Sum('quantity'))["quantity__sum"],
+                            },
+                            "submitted":{
+                                "total":order_products.filter(updated__hour = hour,status__code="submitted").aggregate(Sum('total'))["total__sum"],
+                                "order_count":order_products.filter(updated__hour = hour,status__code="submitted").aggregate(Count('order'))["order__count"],
+                                "quantity":order_products.filter(updated__hour = hour,status__code="submitted").aggregate(Sum('quantity'))["quantity__sum"],
+                            },
+                            "cancelled": {
+                                "total": order_products.filter(updated__hour=hour)
+                                .filter(Q(status__code="cancelled")|Q(status__code="ghosted"))
+                                .aggregate(Sum('total'))["total__sum"],
+                                "order_count": order_products.filter(updated__hour=hour)
+                                .filter(Q(status__code="cancelled")|Q(status__code="ghosted"))
+                                .aggregate(Count('order'))["order__count"],
+                                "quantity": order_products.filter(updated__hour=hour)
+                                .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                                .aggregate(Sum('quantity'))["quantity__sum"],
+                            }
+                        }
+                        for hour in range(24)
+                    ]
+                case "day":
+                    selected_date = datetime.datetime.fromisoformat(request.POST.get('statistic_data')).date()
+                    order_products = Order_Product.objects.filter(product=product,
+                                                                  updated__month = selected_date.month,updated__year = selected_date.year).exclude(
+                        status__code="pending")
+                    completed_order_product = order_products.exclude(
+                        Q(status__code="submitted") | Q(status__code="cancelled") | Q(status__code="ghosted"))
+
+                    store_order_products = Order_Product.objects.filter(updated__month = selected_date.month,updated__year = selected_date.year).exclude(
+                        status__code="pending")
+                    store_completed_order_product = store_order_products.exclude(
+                        Q(status__code="submitted") | Q(status__code="cancelled") | Q(status__code="ghosted"))
+
+                    ctx["statistic"] = {
+                        "completed": {
+                            "store_total": store_completed_order_product.aggregate(Sum('total'))["total__sum"],
+                            "total": completed_order_product.aggregate(Sum('total'))["total__sum"],
+                            "store_order_count": store_completed_order_product.aggregate(Count('order'))[
+                                "order__count"],
+                            "order_count": completed_order_product.aggregate(Count('order'))["order__count"],
+                            "quantity": completed_order_product.aggregate(Sum('quantity'))["quantity__sum"]
+                        },
+                        "submitted": {
+                            "store_total":
+                                store_order_products.filter(status__code="submitted").aggregate(Sum('total'))[
+                                    "total__sum"],
+                            "total": order_products.filter(status__code="submitted").aggregate(Sum('total'))[
+                                "total__sum"],
+                            "store_order_count":
+                                store_order_products.filter(status__code="submitted").aggregate(Count('order'))[
+                                    "order__count"],
+                            "order_count": order_products.filter(status__code="submitted").aggregate(Count('order'))[
+                                "order__count"],
+                            "quantity": order_products.filter(status__code="submitted").aggregate(Sum('quantity'))[
+                                "quantity__sum"]
+                        },
+                        "cancelled": {
+                            "store_total": store_order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Sum('total'))["total__sum"],
+                            "total": order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Sum('total'))["total__sum"],
+                            "store_order_count": store_order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Count('order'))["order__count"],
+                            "order_count": order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Count('order'))["order__count"],
+                            "quantity": order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Sum('quantity'))["quantity__sum"],
+                        }
+                    }
+
+                    ctx["data"] = [
+                        {
+                            "completed": {
+                                "total": completed_order_product.filter(updated__day=day).aggregate(Sum('total'))[
+                                    "total__sum"],
+                                "order_count": completed_order_product.filter(updated__day=day).aggregate(Count('order'))[
+                                    "order__count"],
+                                "quantity": completed_order_product.filter(updated__day=day).aggregate(Sum('quantity'))["quantity__sum"]
+                            },
+                            "submitted": {
+                                "total": order_products.filter(updated__day=day, status__code="submitted").aggregate(
+                                    Sum('total'))["total__sum"],
+                                "order_count": order_products.filter(updated__day=day, status__code="submitted").aggregate(
+                                    Count('order'))["order__count"],
+                                "quantity": order_products.filter(status__code="submitted").aggregate(Sum('quantity'))[
+                                    "quantity__sum"]
+                            },
+                            "cancelled": {
+                                "total": order_products.filter(updated__day=day)
+                                .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                                .aggregate(Sum('total'))["total__sum"],
+                                "order_count": order_products.filter(updated__day=day)
+                                .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                                .aggregate(Count('order'))["order__count"],
+                                "quantity": order_products.filter(updated__day=day)
+                                .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                                .aggregate(Sum('quantity'))["quantity__sum"]
+                            }
+                        }
+                        for day in range(1, calendar.monthrange(selected_date.year,selected_date.month)[1])
+                    ]
+                case "month":
+                    selected_year = request.POST.get('statistic_data')
+                    order_products = Order_Product.objects.filter(product=product,
+                                                                  updated__year=selected_year).exclude(
+                        status__code="pending")
+                    completed_order_product = order_products.exclude(
+                        Q(status__code="submitted") | Q(status__code="cancelled") | Q(status__code="ghosted"))
+
+                    store_order_products = Order_Product.objects.filter(updated__year=selected_year).exclude(
+                        status__code="pending")
+                    store_completed_order_product = store_order_products.exclude(
+                        Q(status__code="submitted") | Q(status__code="cancelled") | Q(status__code="ghosted"))
+
+                    ctx["statistic"] = {
+                        "completed": {
+                            "store_total": store_completed_order_product.aggregate(Sum('total'))["total__sum"],
+                            "total": completed_order_product.aggregate(Sum('total'))["total__sum"],
+                            "store_order_count": store_completed_order_product.aggregate(Count('order'))[
+                                "order__count"],
+                            "order_count": completed_order_product.aggregate(Count('order'))["order__count"],
+                            "quantity": completed_order_product.aggregate(Sum('quantity'))["quantity__sum"]
+                        },
+                        "submitted": {
+                            "store_total":
+                                store_order_products.filter(status__code="submitted").aggregate(Sum('total'))[
+                                    "total__sum"],
+                            "total": order_products.filter(status__code="submitted").aggregate(Sum('total'))[
+                                "total__sum"],
+                            "store_order_count":
+                                store_order_products.filter(status__code="submitted").aggregate(Count('order'))[
+                                    "order__count"],
+                            "order_count": order_products.filter(status__code="submitted").aggregate(Count('order'))[
+                                "order__count"],
+                            "quantity": order_products.filter(status__code="submitted").aggregate(Sum('quantity'))[
+                                "quantity__sum"]
+                        },
+                        "cancelled": {
+                            "store_total": store_order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Sum('total'))["total__sum"],
+                            "total": order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Sum('total'))["total__sum"],
+                            "store_order_count": store_order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Count('order'))["order__count"],
+                            "order_count": order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Count('order'))["order__count"],
+                            "quantity": order_products
+                            .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                            .aggregate(Sum('quantity'))["quantity__sum"],
+                        }
+                    }
+
+                    ctx["data"] = [
+                        {
+                            "completed": {
+                                "total": completed_order_product.filter(updated__month=month).aggregate(Sum('total'))[
+                                    "total__sum"],
+                                "order_count": completed_order_product.filter(updated__month=month).aggregate(Count('order'))[
+                                    "order__count"],
+                                "quantity": completed_order_product.filter(updated__month=month).aggregate(Sum('quantity'))["quantity__sum"]
+                            },
+                            "submitted": {
+                                "total": order_products.filter(updated__month=month, status__code="submitted").aggregate(
+                                    Sum('total'))["total__sum"],
+                                "order_count":
+                                    order_products.filter(updated__month=month, status__code="submitted").aggregate(
+                                        Count('order'))["order__count"],
+                                "quantity": order_products.filter(status__code="submitted").aggregate(Sum('quantity'))[
+                                    "quantity__sum"]
+                            },
+                            "cancelled": {
+                                "total": order_products.filter(updated__month=month)
+                                .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                                .aggregate(Sum('total'))["total__sum"],
+                                "order_count": order_products.filter(updated__month=month)
+                                .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                                .aggregate(Count('order'))["order__count"],
+                                "quantity": order_products.filter(updated__month=month)
+                                .filter(Q(status__code="cancelled") | Q(status__code="ghosted"))
+                                .aggregate(Sum('quantity'))["quantity__sum"]
+                            }
+                        }
+                        for month in range(1, 13)
+                    ]
+
+            for item in ctx["statistic"].items():
+                print(item)
+                item[1]["total"] = float(item[1]["total"]) if item[1]["total"] else 0
+                item[1]["quantity"] = int(item[1]["quantity"]) if item[1]["quantity"] else 0
+                item[1]["order_count"] = int(item[1]["order_count"]) if item[1]["order_count"] else 0
+                item[1]["store_total"] = float(item[1]["total"]) if item[1]["total"] else 0
+                item[1]["store_order_count"] = int(item[1]["store_order_count"]) if item[1]["store_order_count"] else 0
+
+            for item in ctx["data"]:
+                for subitem in item.items():
+                    subitem[1]["total"] = float(subitem[1]["total"]) if subitem[1]["total"] else 0
+                    subitem[1]["quantity"] = int(subitem[1]["quantity"]) if subitem[1]["quantity"] else 0
+
+            return HttpResponse(json.dumps(ctx), status=200)
+    else:
+        return Http404()
+
 def GetProductReviews(request,slug,page_id):
     ctx = {}
     if request.method == "POST":
         if request.user.profile.is_store_owner:
             store = request.user.store
-            reviews = Product_Review.objects.filter(product__slug = slug)
+            reviews = Product_Review.objects.filter(product__slug = slug,product__store=store)
+
+            ctx["statistic"] = [
+                len(reviews.filter(rating=5)),
+                len(reviews.filter(rating=4.5)),
+                len(reviews.filter(rating=4)),
+                len(reviews.filter(rating=3.5)),
+                len(reviews.filter(rating=3)),
+                len(reviews.filter(rating=2.5)),
+                len(reviews.filter(rating=2)),
+                len(reviews.filter(rating=1.5)),
+                len(reviews.filter(rating=1)),
+                len(reviews.filter(rating=0.5)),
+                len(reviews.filter(rating=0))
+            ]
+
+            filtered_name = request.POST.get('filtered_author')
+            filtered_rating = float(request.POST.get('filtered_rating')) if request.POST.get(
+                'filtered_rating') else None
+
+            if filtered_name:
+                word_list = filtered_name.split()
+                if len(word_list) == 0: word_list = [""]
+                search_query = (Q(author__profile__first_name__contains=word_list[0]) | Q(
+                    author__profile__last_name__contains=word_list[0]))
+                for i in range(1, len(word_list)):
+                    search_query = search_query & (Q(author__profile__first_name__contains=word_list[i]) | Q(
+                        author__profile__last_name__contains=word_list[i]))
+                reviews = reviews.filter(search_query)
+
+            if filtered_rating:
+                reviews = reviews.filter(rating=filtered_rating)
+
+
             paginator = Paginator(reviews, 10)
             page = paginator.get_page(page_id)
             ctx["page_id"] = page.number
@@ -173,10 +502,12 @@ def GetProductReviews(request,slug,page_id):
                     "rating": review.rating,
                     "title": review.title,
                     "review": review.review,
-                    "image_url": review.image.url if review.image else None
+                    "image_url": review.image.url if review.image else None,
+                    "id":review.id
                 }
                 for review in page
             ]
+
         return HttpResponse(json.dumps(ctx), status=200)
     else:
         return Http404()
@@ -285,7 +616,7 @@ def GetOrderProductsData(request,page_id):
                     for day in range(1, calendar.monthrange(selected_date.year,selected_date.month)[1])]
             case "month":
                 selected_year = request.POST.get('statistic_data')
-                ctx["statistic_tag"] = "day"
+                ctx["statistic_tag"] = "month"
                 ctx["statistic"] = [
                     {
                         "submitted": len(order_products.filter(updated__year=selected_year,

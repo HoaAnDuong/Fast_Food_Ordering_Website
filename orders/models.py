@@ -106,6 +106,14 @@ class Order(models.Model):
                 return self.delivery.deliverer
         except:
             return None
+
+    @property
+    def total_length(self):
+        try:
+            with transaction.atomic():
+                return self.delivery.total_length
+        except:
+            return 0
     @property
     def is_cancellable(self):
         return self.order_status.code == "submitted" and len(self.order_products.filter(status__code="delivering")) == 0 and self.customer.profile.remain_cancellations > 0
@@ -139,10 +147,10 @@ class Order(models.Model):
             self.total += self.delivery_fee
 
             now_hour = datetime.datetime.now().time()
-
-            if now_hour >= datetime.time(19,0,0) or now_hour <= datetime.time(6,0,0):
-                self.nighttime_fee = Money(8000,'VND')
-            self.total += self.nighttime_fee
+            if self.order_status.code == "pending" or self.order_status.code == "submitted":
+                if now_hour >= datetime.time(19,0,0) or now_hour <= datetime.time(6,0,0):
+                    self.nighttime_fee = Money(8000,'VND')
+                self.total += self.nighttime_fee
 
             self.save()
         return self.total

@@ -4,7 +4,7 @@
         {% if user.is_authenticated %}
             {% if current_order %}
             <br>
-            <button onclick = "window.location.replace('/current-store/product-list/1')" class = "btn">Trở lại</button>
+            <button onclick = "window.location.replace('/profile')" class = "btn">Trở lại</button>
             <hr>
 
             <ul class="col-md-2 nav nav-pills nav-stacked">
@@ -252,7 +252,11 @@
                                     <td>{{order_product.status.code}}</td>
                                     <td>{{order_product.updated}}</td>
                                     <td>{{order_product.note}}</td>
-                                    <td></td>
+                                    <td>
+                                        {% if order_product.status.code == "received" %}
+                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#review_product_modal_{{forloop.counter0}}">Đánh giá</button>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -404,7 +408,7 @@
                                                     <input type = "text" name = "title" value = "{% if order_product.review %}{{order_product.review.title}}{% endif %}" maxlength="128">
 
                                                     <h5>Nội dung đánh giá</h5>
-                                                    <textarea name = "review" style = "width:30vw; height:18.54vw;" maxlength="2048">{% if order_product.review %}{{order_product.review.review}}{% endif %}</textarea>
+                                                    <textarea name = "review" style = "width:50vw; height:18.54vw;" maxlength="2048">{% if order_product.review %}{{order_product.review.review}}{% endif %}</textarea>
 
 
                                                     <script>

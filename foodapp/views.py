@@ -9,6 +9,8 @@ from django.contrib.auth.models import Group
 from phonenumber_field.validators import validate_international_phonenumber
 from django.core.validators import validate_email
 from axes.utils import reset
+from django.core.paginator import Paginator
+from products.utils import recommended_products,searched_products
 from django.core.exceptions import ValidationError
 
 from django.template import RequestContext
@@ -89,7 +91,13 @@ def LogoutPage(request):
     return render(request,'Site/Logout.html')
 
 def Home(request):
-    return render(request,'Site/Home.html')
+    product = recommended_products(user=request.user)
+    paginator = Paginator(product, 5)
+    page = paginator.get_page(1)
+    ctx = {
+        "page":page
+    }
+    return render(request,'Site/Home.html',ctx)
 
 def RouteTest(request):
     return render(request,'Site/RoutingTest.html')

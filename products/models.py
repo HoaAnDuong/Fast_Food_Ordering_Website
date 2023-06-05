@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from django.db import transaction
 from foodapp.utils import image_upload
-from django.db.models import Avg,Count
+from django.db.models import Q,Avg,Count,Sum
 
 # Create your models here.
 
@@ -59,6 +59,10 @@ class Product(models.Model):
         average_rating = self.reviews.aggregate(Avg("rating"),Count('author'))
         return average_rating
 
+    @property
+    def total_revenue(self):
+        order_products = self.order_products.exclude(Q(status__code = "pending")|Q(status__code = "cancelled")|Q(status__code = "ghosted"))
+        return order_products.aggregate(Sum("total"))["total__sum"]
     def get_absolute_url(self):
         return reverse("product", kwargs={"slug": self.slug})
 
@@ -71,6 +75,8 @@ class Product(models.Model):
         review_content = request.POST.get('review')
         image = request.FILES.get('image')
         print(image)
+        if rating < 0 or rating > 5:
+            raise ValueError("Giá trị của lượt đánh giá phải nằm giữa 0 và 5")
         try:
             with transaction.atomic():
                 review = Product_Review.objects.get(product=self,author=user)

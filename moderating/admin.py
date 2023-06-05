@@ -4,6 +4,5 @@ from .models import *
 
 admin.site.register(Complaint)
 admin.site.register(Complaint_Status)
-admin.site.register(Store_Complaint)
-admin.site.register(Product_Complaint)
-admin.site.register(Order_Complaint)
+admin.site.register(Moderator_Changelog)
+admin.site.register(Action)

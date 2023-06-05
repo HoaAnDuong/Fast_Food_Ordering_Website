@@ -22,6 +22,7 @@
                             <th>Loại món</th>
                             <th>Trạng thái</th>
                             <th>Đơn giá</th>
+                            <th>Tổng doanh thu</th>
                             <th>Đánh giá</th>
                             <th>Hành động</th>
                         </tr>
@@ -34,6 +35,7 @@
                             <td>{{product.category.name}}</td>
                             <td>{{product.status}}</td>
                             <td>{{product.price}}</td>
+                            <td>{% if product.total_revenue %}₫{{product.total_revenue}}{% endif %}</td>
                             <td>
                                 <input id="rating_product_{{forloop.counter0}}" type="text" name = "rating" value = "{% if product.average_rating.rating__avg %}{{product.average_rating.rating__avg}}{% else %}0{% endif %}">
                                 <script>

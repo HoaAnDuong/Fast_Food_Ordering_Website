@@ -1,14 +1,105 @@
 reviews_section = document.getElementById('reviews_section');
 review_pagination = document.getElementById('review_pagination');
+is_filtered = false
 
+const labels = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0];
+const data = {
+  labels: labels,
+  datasets: [
+    {
+      label: 'Số lượt đánh giá',
+      data: [],
+      color: "#0390fc",
+    },
+  ]
+};
+
+const config = {
+  type: 'bar',
+  data: data,
+  options: {
+    indexAxis: 'y',
+    // Elements options apply to all of the options unless overridden in a dataset
+    // In this case, we are setting the border of each horizontal bar to be 2px wide
+    elements: {
+      bar: {
+        borderWidth: 2,
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Điểm đánh giá',
+          font: {
+            size: 15,
+            lineHeight: 1.2,
+            weight: 'bold',
+          },
+          padding: {top: 0, left: 0, right: 0, bottom: 0}
+        }
+      },
+      y: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Số lượt đánh giá',
+          font: {
+            size: 15,
+            lineHeight: 1.2,
+            weight: 'bold',
+          },
+          padding: {top: 0, left: 0, right: 0, bottom: 0}
+        }
+      }
+    },
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Số lượng đánh giá'
+      }
+    }
+  },
+};
+
+// Get a reference to the canvas element
+var ctx = document.getElementById('rating_chart').getContext('2d');
+
+// Create a new chart instance using the config object
+rating_chart = new Chart(ctx, config);
+
+
+$("#filter_button").click(() => {
+    is_filtered = !is_filtered
+    console.log(is_filtered)
+    if(is_filtered){
+        $("#filter_button").attr("class","btn btn-danger");
+        $("#filter_button").html("Tắt bộ lọc");
+    }else{
+        $("#filter_button").attr("class","btn btn-primary");
+        $("#filter_button").html("Bật bộ lọc");
+    }
+    reviewsRefresh(1);
+});
 
 function reviewsRefresh(page_id){
     $.ajax({
         type:'POST',
         url:`/current-store/product/${$("#slug").val()}/${page_id}/get-reviews`,
         data:
+        is_filtered ?
         {
-            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+            filtered_author:$('#filtered_author').val(),
+            filtered_rating:$('#filtered_rating').val(),
+        }:
+        {
+            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
         },
         success: function(data){
             let json = $.parseJSON(data);
@@ -45,10 +136,14 @@ function reviewsRefresh(page_id){
                 <h5><b>${json.reviews[i].title}</b></h5>
                 <h5>${json.reviews[i].review}</h5>
                 <img src="${json.reviews[i].image_url !== null ? json.reviews[i].image_url : ""}" style = "${json.reviews[i].image_url !== null ? "width:30vw; height:18.54vw;" : ""}">
+                <input type = "hidden" id = "review_${i}_id" value = ${json.id}>
                 </div>`
                 $(`#rating_${i}`).rating({min:0, max:5, step:0.5,
                                                              size:'md',starCaptions:(val)=>{return `${val}`},
                                                              displayOnly:true});
+
+                rating_chart.data.datasets[0].data = json.statistic;
+                rating_chart.update();
             }
         },
         error: function(data){

@@ -8,6 +8,7 @@ from foodapp.utils import avatar_change
 from django.contrib import messages
 from django.db import transaction
 from orders.models import Payment_Method
+from django.core.paginator import Paginator
 # Create your views here.
 
 def DelivererProfileView(request):
@@ -192,3 +193,58 @@ def GetCurrentDeliveryData(request):
             return HttpResponse(status=400)
     else:
         return Http404()
+
+def DeliveryListView(request):
+    return render(request, "Site/DelivererOrderList.html")
+
+def GetDelivererListData(request,page_id):
+    ctx = {}
+    if request.method == "POST":
+        orders = Order.objects.filter(delivery__deliverer__user=request.user).order_by('-updated')
+        paginator = paginator = Paginator(orders, 10)
+        page = paginator.get_page(page_id)
+        ctx["page_id"] = page.number
+        ctx["num_pages"] = paginator.num_pages
+        ctx["orders"] = [
+            {
+                "id":(page_id-1)*10+i+1,
+                "order_url": f"/deliverer-profile/deliveries/{(page_id-1)*10+i+1}",
+                "updated":order.updated.__str__(),
+                "created":order.created.__str__(),
+                "payment_method":order.payment_method.code if order.payment_method else None,
+                "order_status":order.order_status.code,
+                "delivery_status":order.delivery_status.code,
+                "payment_status":order.payment_status.code,
+                "total":order.total.__str__(),
+                "customer":{
+                    "name":f"{order.customer.profile.last_name} {order.customer.profile.first_name}",
+                    "phone_number":order.customer.profile.phone_number.__str__(),
+                    "email":order.customer.profile.email.__str__(),
+                } if order.customer.profile else None,
+                "total_length":order.total_length
+            }
+            for i,order in enumerate(page)
+        ]
+        return HttpResponse(json.dumps(ctx), status=200)
+    else:
+        return Http404()
+
+def DeliveryView(request,page_id):
+    ctx = {}
+    current_order = Order.objects.filter(delivery__deliverer__user=request.user).order_by('-updated')[page_id - 1]
+    ctx["remain_cancellations"] = request.user.profile.remain_cancellations
+    ctx["current_order"] = current_order
+    ctx["payment_methods"] = Payment_Method.objects.all()
+    if current_order and current_order.order_status.code != "pending" and current_order.order_status.code != "expired":
+        route = current_order.delivery.points.all().order_by('priority')
+
+        ctx["route"] = {}
+        ctx["route"]["start"] = route[0]
+        ctx["route"]["destination"] = route[len(route) - 1]
+        ctx["route"]["stores"] = route[1:len(route) - 1]
+    if request.method == "POST":
+        match request.POST.get('form_tag'):
+            case "review_product":
+                product = Product.objects.get(id=request.POST.get("product_id"))
+                product.make_review(request)
+    return render(request, "Site/DeliveryView.html", ctx)

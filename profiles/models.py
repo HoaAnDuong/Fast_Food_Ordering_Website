@@ -137,3 +137,7 @@ class Profile(models.Model):
 	@property
 	def is_deliverer(self):
 		return Group.objects.get(name="Deliverers") in self.user.groups.all()
+
+	@property
+	def is_moderator(self):
+		return Group.objects.get(name="Moderators") in self.user.groups.all()

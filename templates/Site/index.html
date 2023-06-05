@@ -49,6 +49,7 @@
         <ul class="nav navbar-nav">
             <li><a href="/">Trang chủ</a></li>
             <li><a href="/product-list/1">Món ăn</a></li>
+            <li><a href="/store-list/1">Cửa hàng</a></li>
             <li><a href="/routing-test">Routing Test</a></li>
         </ul>
           {% if not user.is_authenticated %}
@@ -73,6 +74,9 @@
                   {% if user.profile.is_deliverer %}
                     <li><a href="/deliverer-profile">Thông tin Người giao hàng</a></li>
                     <li><a href="/current-delivery">Đơn vận chuyển hiện tại</a></li>
+                  {% endif %}
+                  {% if user.profile.is_moderator %}
+                    <li><a href = "/moderator">Kiểm duyệt</a></li>
                   {% endif %}
                   <li><a href="/current-order">Đơn hàng hiện tại</a></li>
                   <li><a href="/logout">Đăng xuất</a></li>
@@ -192,6 +196,7 @@
         </form>
 
     {% endif %}
+    <br>
 
     {% block content %}{% endblock %}
 </body>

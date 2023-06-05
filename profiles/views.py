@@ -7,8 +7,10 @@ from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from .models import Profile,Gender,User_Status
 from foodapp.utils import avatar_change
 from orders.models import Order,Payment_Method
-import os
+from products.models import Product
 from django.core.paginator import Paginator
+from django.http import HttpResponse,Http404
+import json
 
 # Create your views here.
 
@@ -86,10 +88,48 @@ def OrderView(request,page_id):
         ctx["route"]["start"] = route[0]
         ctx["route"]["destination"] = route[len(route) - 1]
         ctx["route"]["stores"] = route[1:len(route) - 1]
+    if request.method == "POST":
+        match request.POST.get('form_tag'):
+            case "review_product":
+                product = Product.objects.get(id=request.POST.get("product_id"))
+                product.make_review(request)
     return render(request, "Site/OrderView.html", ctx)
 def OrderListView(request):
     ctx = {}
     orders = Order.objects.filter(customer = request.user).order_by('-updated')
     paginator = Paginator(orders, 10)
     ctx["page_range"] = range(1, paginator.num_pages + 1) if len(orders) != 0 else None
-    return render(request, "Site/OrderView.html",ctx)
+
+    return render(request, "Site/ProfileOrderList.html",ctx)
+
+def GetOrderListData(request,page_id):
+    ctx = {}
+    if request.method == "POST":
+        orders = Order.objects.filter(customer=request.user).order_by('-updated')
+        paginator = paginator = Paginator(orders, 10)
+        page = paginator.get_page(page_id)
+        ctx["page_id"] = page.number
+        ctx["num_pages"] = paginator.num_pages
+        ctx["orders"] = [
+            {
+                "id":(page_id-1)*10+i+1,
+                "order_url": f"/profile/orders/{(page_id-1)*10+i+1}",
+                "updated":order.updated.__str__(),
+                "created":order.created.__str__(),
+                "payment_method":order.payment_method.code if order.payment_method else None,
+                "order_status":order.order_status.code,
+                "delivery_status":order.delivery_status.code,
+                "payment_status":order.payment_status.code,
+                "total":order.total.__str__(),
+                "deliverer":{
+                    "name":f"{order.deliverer.user.profile.last_name} {order.deliverer.user.profile.first_name}",
+                    "phone_number":order.deliverer.phone_number.__str__(),
+                    "email":order.deliverer.email.__str__(),
+                } if order.deliverer else None,
+                "total_length":order.total_length
+            }
+            for i,order in enumerate(page)
+        ]
+        return HttpResponse(json.dumps(ctx), status=200)
+    else:
+        return Http404()

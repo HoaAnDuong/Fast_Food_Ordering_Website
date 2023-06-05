@@ -85,24 +85,64 @@
                         </form>
                 </div>
                 <div class = "tab-pane fade in" id = "reviews">
-                    {% if page_range %}
+
+
+                    <div>
+                        <h4>Bộ lọc</h4>
+                        <h5>Tên tác giả</h5>
+                        <input type =  "text" id = "filtered_author" maxlength = 256>
+                        <h5>Điểm đánh giá</h5>
+                        <input id="filtered_rating" type="text" name = "rating" value = 0>
+                        <script>
+                        $(`#filtered_rating`).rating({min:0, max:5, step:0.5,
+                                                                 size:'md',starCaptions:(val)=>{return `${val}`},
+                                                                 displayOnly:false});
+                        </script>
+                        <button id = "filter_button" class = "btn btn-primary">Bật bộ lọc</button>
+                        <br>
+                        <br>
+                        <button class="btn" onclick = "reviewsRefresh(1);">Tải lại</button>
+                    </div>
+                    <hr>
+                    <div style = "width:500px;height:309px">
+                        <canvas id = "rating_chart" style = "width:300px;height:185px">
+
+                        </canvas>
+                    </div>
+
+                    <hr>
                     <ul class="pagination" style = "display:flex;" id = "review_pagination">
 
                         {% for i in page_range %}
                         <li onclick = "reviewsRefresh({{i}});" {% if i == 1 %}class="active"{% endif %}><a>{{i}}</a></li>
                         {% endfor %}
                     </ul>
-                    <button onclick = "reviewsRefresh(1);" class = "btn">Tải lại</button>
+                    <hr>
                     <input type="hidden" id = "slug" value = "{{product.slug}}" readonly>
                     <input type="hidden" id = "page_id" value = "1" readonly>
                     <div id = "reviews_section">
                     </div>
                         {% load static %}
                         <script src = "{% static 'js/product-reviews.js'%}"></script>
-                    {% else %}
-                    <h3>Hiện tại chưa có bình luận nào cho món này.</h3>
-                    {% endif %}
 
+
+                </div>
+                <div class = "tab-pane fade in" id = "statistic">
+                    <br>
+                    <button id = "refresh-button" class = "btn">Tải lại</button>
+                    <hr>
+
+                    <select id = "cmbChartType">
+                        <option value = "hour" selected>Trong Ngày</option>
+                        <option value = "day">Trong Tháng</option>
+                        <option value = "month">Trong Năm</option>
+                    </select>
+
+                    <div id = "chart_section" style = "width:80vw;height:60vh;margin-bottom:100px">
+
+                    </div>
+                    {% load static %}
+                    <script src = "{% static 'js/product-statistic.js'%}"></script>
                 </div>
             </div>
             {% else %}

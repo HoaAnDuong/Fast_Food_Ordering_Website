@@ -4,8 +4,9 @@
         {% if user.is_authenticated %}
             {% if current_order %}
             <ul class="nav nav-tabs">
-              <li><a href="/deliverer-profile">Thông tin Người giao hàng</a></li>
-              <li class="active"><a href="/current-delivery">Đơn vận chuyển hiện tại</a></li>
+                <li><a href="/deliverer-profile">Thông tin Người giao hàng</a></li>
+                <li class="active"><a href="/current-delivery">Đơn vận chuyển hiện tại</a></li>
+                <li><a href="/deliverer-profile/delivery-list">Danh sách đơn vận chuyển</a></li>
             </ul>
             <br>
             <ul class="col-md-2 nav nav-pills nav-stacked">

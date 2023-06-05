@@ -1,10 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'Site/index.html' %}
+{% block content %}
+    <div class = "container-fluid">
+        {% if user.is_authenticated %}
+            {% if user.profile.is_moderator %}
+            <ul class="nav nav-tabs">
+                <li class = "active"><a data-toggle = "tab" href="#stores">Cửa hàng</a></li>
+                <li><a data-toggle = "tab" href="#products">Sản phẩm</a></li>
+                <li><a data-toggle = "tab" href="#orders">Đơn hàng</a></li>
+                <li><a data-toggle = "tab" href="#changelogs">Các thay đổi đã thực hiện</a></li>
+            </ul>
+            <div class = "tab-pane fade in active" id = "store">
 
-</body>
-</html>
+            </div>
+            <div class = "tab-pane fade" id = "products">
+                <br>
+
+                <div>
+                    <h4>Bộ lọc</h4>
+                    <h5>Tên món </h5>
+                    <input type =  "text" id = "filtered_product_name" maxlength = 256>
+                    <h5>Trạng thái</h5>
+                    <select id = "filtered_status">
+                        <option value = ""></option>
+                        {% for status in product_status %}
+                        <option value = "{{status.code}}">{{status.code}}</option>
+                        {% endfor %}
+                    </select>
+                    <br>
+                    <br>
+                    <button id = "product_filter_button" class = "btn btn-primary">Bật bộ lọc</button>
+                </div>
+                <br>
+                <button class="btn" onclick = "productRefresh(1);">Tải lại</button>
+                <hr>
+                <ul class="pagination" style = "display:flex;" id = "product_pagination">
+                </ul>
+                <table class = "table table-hover" id = "product_table" style = "width: 50vw;">
+                    <thead>
+                        <tr>
+                            <th>Tên</th>
+                            <th>Hình ảnh</th>
+                            <th>Loại món</th>
+                            <th>Trạng thái</th>
+                            <th>Đơn giá</th>
+                            <th>Đánh giá</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            {% load static %}
+            <script src = "{% static 'js/moderator.js' %}"></script>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}
