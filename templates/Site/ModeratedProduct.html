@@ -1,0 +1,268 @@
+{% extends 'Site/index.html' %}
+{% block content %}
+<div class = "container-fluid">
+        {% if user.is_authenticated %}
+            {% if user.profile.is_moderator %}
+            <br>
+            <button onclick = "window.location.replace('/current-store/product-list/1')" class = "btn">Trở lại</button>
+            <hr>
+            <ul class="col-md-2 nav nav-pills nav-stacked">
+                <li class="active"><a data-toggle = "tab" href="#profile">Thông tin</a></li>
+                <li><a data-toggle = "tab" href="#reviews">Các bài đánh giá</a></li>
+                <li><a data-toggle = "tab" href="#statistic">Thống kê</a>
+            </ul>
+            <div class = "col-md-8 tab-content">
+                <div class = "tab-pane fade in active" id = "profile">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <h3>Hình ảnh</h3>
+                        <input type = "hidden" name = "form_tag" value = "image_upload" readonly>
+                        <div class = "form-group">
+                            <img id = "store_avatar" src = "{% if product.image %}{{product.image.url}}{% endif %}" style = "width:30vw; height:18.54vw;">
+                        </div>
+                    </form>
+                    <form method = "POST" name="profile">
+                            {% csrf_token %}
+                            <h3>Thông tin cơ bản</h3>
+                            <input type = "hidden" name = "form_tag" value = "product_update" readonly>
+                            <div class = "form-group">
+                                <h4>Trạng thái:</h4>
+                                <label>{{product.status.code}}</label>
+                            </div>
+                            <div class = "form-group">
+                                <label>Tên<br></label>
+                                <input type="text" name = "name" value = "{{product.name}}" readonly>
+                            </div>
+                            <div class = "form-group">
+                                <label>Giá({{product.price.currency}})<br></label>
+                                <input type="text" name = "price" value = "{{product.price.amount}}" readonly>
+                            </div>
+                            <div class = "form-group">
+                                <label>Loại món:<br></label>
+                                <label>{{product.category.name}}</label>
+                            </div>
+                            <div class = "form-group">
+                                <label>Mô tả</label>
+                                <br>
+                                <p>{{product.description}}</p>
+                            </div>
+                            {% if error == "store" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+
+                        </form>
+                </div>
+                <div class = "tab-pane fade in" id = "reviews">
+
+                    <br>
+                    <div>
+                        <h4>Bộ lọc</h4>
+                        <h5>Tên tác giả</h5>
+                        <input type =  "text" id = "filtered_author" maxlength = 256>
+                        <h5>Điểm đánh giá</h5>
+                        <input id="filtered_rating" type="text" name = "rating" value = 0>
+                        <script>
+                        $(`#filtered_rating`).rating({min:0, max:5, step:0.5,
+                                                                 size:'md',starCaptions:(val)=>{return `${val}`},
+                                                                 displayOnly:false});
+                        </script>
+                        <button id = "filter_button" class = "btn btn-primary">Bật bộ lọc</button>
+                        <br>
+                        <br>
+                        <button class="btn" onclick = "reviewsRefresh(1);">Tải lại</button>
+                    </div>
+                    <hr>
+                    <div style = "width:500px;height:309px">
+                        <canvas id = "rating_chart" style = "width:300px;height:185px">
+
+                        </canvas>
+                    </div>
+
+                    <hr>
+                    {% if page_range %}
+                    <ul class="pagination" style = "display:flex;" id = "review_pagination">
+                        {% for i in page_range %}
+                        <li onclick = "reviewsRefresh({{i}});" {% if i == 1 %}class="active"{% endif %}><a>{{i}}</a></li>
+                        {% endfor %}
+                    </ul>
+                    <hr>
+
+                    <input type="hidden" id = "slug" value = "{{product.slug}}" readonly>
+                    <input type="hidden" id = "page_id" value = "1" readonly>
+                    <div id = "reviews_section">
+                    </div>
+                        {% load static %}
+                        <script src = "{% static 'js/moderated-product-reviews.js'%}"></script>
+                    {% else %}
+
+                    {% endif %}
+                </div>
+                <div>
+                    <h3>Hành động</h3>
+                    {% if product.status.code == "pending" %}
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#verify_product_modal">Xác nhận món</button>
+                    <div id = "verify_product_modal" class = "modal fade" role="dialog">
+                        <div class="modal-dialog">
+                            {% if user.is_authenticated %}
+                                {% if user.profile.is_moderator %}
+
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">
+                                                Xác nhận món
+                                            </h4>
+                                    </div>
+                                    <form method = "POST">
+                                        {% csrf_token %}
+                                        <div class = "modal-body">
+                                           <input type = "hidden" name = "form_tag" value = "verify_product" readonly>
+
+                                            <h4>Bạn có chắc chắn muốn xác nhận {{product.name}}?</h4>
+                                            <h5>Hành động: <label style = "color:green">Xác nhận</label></h5>
+                                            <h5>Lý do</h5>
+                                            <textarea name = "reason" style = "width:50vw; height:18.54vw;" maxlength="2048"></textarea>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-success" onClick="window.location.reload()">Xác nhận</button>
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                {% endif %}
+                            {% else %}
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label>Bạn cần phải đăng nhập để thực hiện hành động trên</label>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% elif product.status.code == "active" or product.status.code == "disabled" %}
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#ban_product_modal">Chặn món</button>
+                    <div id = "ban_product_modal" class = "modal fade" role="dialog">
+                        <div class="modal-dialog">
+                            {% if user.is_authenticated %}
+                                {% if user.profile.is_moderator %}
+
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">
+                                                Chặn món
+                                            </h4>
+                                    </div>
+                                    <form method = "POST">
+                                        {% csrf_token %}
+                                        <div class = "modal-body">
+                                           <input type = "hidden" name = "form_tag" value = "ban_product" readonly>
+
+                                            <h4>Bạn có chắc chắn muốn chặn {{product.name}}?</h4>
+                                            <h5>Hành động: <label style = "color:red">Chặn</label></h5>
+                                            <h5>Lý do</h5>
+                                            <textarea name = "reason" style = "width:50vw; height:18.54vw;" maxlength="2048"></textarea>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-danger" onClick="window.location.reload()">Xác nhận</button>
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                {% endif %}
+                            {% else %}
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label>Bạn cần phải đăng nhập để thực hiện hành động trên</label>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% elif product.status.code == "banned" %}
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#unban_product_modal">Bỏ chặn</button>
+                    <div id = "unban_product_modal" class = "modal fade" role="dialog">
+                        <div class="modal-dialog">
+                            {% if user.is_authenticated %}
+                                {% if user.profile.is_moderator %}
+
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">
+                                                Bỏ chặn món
+                                            </h4>
+                                    </div>
+                                    <form method = "POST">
+                                        {% csrf_token %}
+                                        <div class = "modal-body">
+                                           <input type = "hidden" name = "form_tag" value = "unban_product" readonly>
+
+                                            <h4>Bạn có chắc chắn muốn chặn {{product.name}}?</h4>
+                                            <h5>Hành động: <label style = "color:yellow">Bỏ Chặn</label></h5>
+                                            <h5>Lý do</h5>
+                                            <textarea name = "reason" style = "width:50vw; height:18.54vw;" maxlength="2048"></textarea>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-success" onClick="window.location.reload()">Xác nhận</button>
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                {% endif %}
+                            {% else %}
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label>Bạn cần phải đăng nhập để thực hiện hành động trên</label>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <meta http-equiv="refresh" content="1; url='/'" />
+            <div>
+                <h3>Bạn không phải người kiểm duyệt, không thể thực hiện chức năng này</h3>
+            </div>
+            {% endif %}
+        {% else %}
+            <meta http-equiv="refresh" content="1; url='/login'" />
+            <div>
+                <h3>You are not logged in now, so you will be directed to Login Page</h3>
+            </div>
+        {% endif %}
+</div>
+{% endblock %}

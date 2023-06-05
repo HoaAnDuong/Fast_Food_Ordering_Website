@@ -1,0 +1,475 @@
+{% extends 'Site/index.html' %}
+{% block content %}
+    <div class = "container-fluid">
+        {% if user.is_authenticated %}
+            {% if current_order %}
+            <br>
+            <button onclick = "window.location.replace('/profile')" class = "btn">Trở lại</button>
+            <hr>
+
+            <ul class="col-md-2 nav nav-pills nav-stacked">
+                <li class="active"><a data-toggle = "tab" href="#profile">Thông tin Đơn Hàng</a></li>
+                <li><a data-toggle = "tab" href="#order_product_tab">Giỏ hàng<span class="badge">{{current_order.total_quantity}}</span></a></li>
+                <li><a data-toggle = "tab" href="#order_log">Nhật ký</a></li>
+            </ul>
+            <div class = "col-md-8 tab-content">
+                <div class = "tab-pane fade in active" id = "profile">
+                    <form method = "POST">
+                        {% csrf_token %}
+                        <div>
+                            <h2>Đơn hàng hiện tại</h2>
+                        </div>
+                        <input type="hidden" name="form_tag" value = "update_order" readonly>
+                        <div>
+                            <h4>Thời điểm khởi tạo:</h4>
+                            <label>{{current_order.created}}</label>
+                        </div>
+                        <div>
+                            <h4>Thời điểm có mặt:</h4>
+                            <label>{{current_order.delivery.arrived}}</label>
+                        </div>
+                        <div>
+                            <h4>Phương thức thanh toán</h4>
+
+                            <label>{{current_order.payment_method.code}}</label>
+                        </div>
+                        <div>
+                            <h4>Tình trạng đơn hàng:</h4>
+                            <label id = "order_status">{{current_order.order_status.code}}</label>
+                        </div>
+                        <div>
+                            <h4>Tình trạng vận chuyển:</h4>
+                            <label id = "delivery_status">{{current_order.delivery_status.code}}</label>
+                        </div>
+                        <div>
+                            <h4>Tình trạng thanh toán:</h4>
+                            <label id = "payment_status">{{current_order.payment_status.code}}</label>
+                        </div>
+                        <div>
+                            <h4>Phí vận chuyển hàng ban đêm:</h4>
+                            <label id = "nighttime_fee">{{current_order.nighttime_fee}}</label>
+                        </div>
+                        <div>
+                            <h4>Phí vận chuyển{% if current_order.order_status.code == "pending" %}(Ước tính){% endif %}:</h4>
+                            <label id = "delivery_fee">{{current_order.delivery_fee}}</label>
+                        </div>
+                        <div>
+                            <h4>Tổng tiền các món ăn:</h4>
+                            <label id = "product_total">{{current_order.product_total}}</label>
+                        </div>
+                        <div>
+                            <h4>Tổng tiền:</h4>
+                            <label id = "total">{{current_order.total}}</label>
+                        </div>
+                        {% if current_order.order_status.code == "pending" %}
+                        <button type="submit" class="btn btn-primary">Cập nhật</button>
+                        {% endif %}
+                    </form>
+
+
+
+
+                    <h3>Danh Sách Cửa Hàng</h3>
+                    <input type = "hidden" id="num_of_store" value = "{{current_order.store_list|length}}">
+                    <table class = "table table-hover" style = "width = auto;" id = "store_table">
+                        <thead>
+                            <tr>
+                                <th>Tên</th>
+                                <th>Địa chỉ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in current_order.store_list %}
+                            <tr>
+                                <td>
+                                    <label id = "store_{{ forloop.counter0 }}_name">{{i.name}}</label>
+                                </td>
+                                <td>
+                                    <label>{{i.location.address}}</label>
+                                    <input type = "hidden" id="store_{{ forloop.counter0 }}_lat" value = {{i.location.lat}}>
+                                    <input type = "hidden" id="store_{{ forloop.counter0 }}_lng" value = {{i.location.lng}}>
+                                    <input type = "hidden" id="store_{{ forloop.counter0 }}_address" value = "{{i.location.address}}">
+                                </td>
+                            </tr>
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+
+
+                    {% if current_order.order_status.code == "pending"  %}
+                       <form method = "POST" id = "location">
+                           {% csrf_token %}
+                            <input type="hidden" name="form_tag" value = "location" readonly>
+                            <div>
+                                <h3>Vị trí giao hàng:</h3>
+                                <div>
+                                    <label>Vĩ độ</label>
+                                    <input type = "text" id="lat" name="lat" value = {{current_order.destination.lat}} readonly>
+                                </div>
+                                <div>
+                                    <label>Kinh độ</label>
+                                    <input type = "text" id="lng" name="lng" value = {{current_order.destination.lng}} readonly>
+                                </div>
+                                <div>
+                                    <label>Địa chỉ</label>
+                                    <br>
+                                    <input type = "text" id="address" name="address" value = "{{current_order.destination.address}}">
+                                </div>
+
+                                <div>
+                                    <input type = "hidden" id="country" name="country" value = "{{current_order.destination.country}}" readonly>
+                                </div>
+                                <div>
+                                    <input type = "hidden" id="region" name="region" value = "{{current_order.destination.region}}" readonly>
+                                </div>
+                                <div>
+                                    <input type = "hidden" id="subregion_1" name="subregion_1" value = "{{current_order.destination.subregion_1}}" readonly>
+                                </div>
+                                <div>
+                                    <input type = "hidden" id="subregion_2" name="subregion_2" value = "{{current_order.destination.subregion_2}}" readonly>
+                                </div>
+                                <div>
+                                    <input type = "hidden" id="total_length" name="total_length" value = "{{current_order.delivery.total_length}}" readonly>
+                                </div>
+                                <div>
+                                    <label id="total_length_label">Tổng chiều dài: {{current_order.delivery.total_length}} km</label>
+                                </div>
+                                <div id = "map" style = "height:80vh; width:80vw; "></div>
+                                <button id = "location_update" type="submit" class="btn btn-primary">Cập nhật</button>
+                            </div>
+                            {% load static %}
+                            <script src="{% static 'js/order-view-map-1.js' %}"></script>
+                            {% if error == "location" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                        </form>
+                    {% elif current_order.order_status.code != "pending" and current_order.order_status.code != "expired" %}
+                        <form method = "POST" id = "delivery_location">
+                            <h3>Người giao hàng</h3>
+                            <h4>{{current_order.deliverer.name}} </h4>
+
+                            <h5> Số điện thoại:{{current_order.deliverer.phone_number}} </h5>
+
+                            <h5> Email:{{current_order.deliverer.email}}</h5>
+                            <input type = "hidden" id="deliverer_lat" value = {{current_order.deliverer.current_location.lat}}>
+                            <input type = "hidden" id="deliverer_lng" value = {{current_order.deliverer.current_location.lng}}>
+
+                            <h3>Danh sách các điểm đến:</h3>
+                            <input type = "hidden" id="num_points" value = "{{route.stores|length}}">
+                            <table class = "table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Mô tả</th>
+                                        <th>Tọa độ</th>
+                                        <th>Địa chỉ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+
+                                            <label>Điểm bắt đầu</label>
+
+                                        </td>
+                                        <td>
+                                            <label>{{route.start.location.lat}} {{route.start.location.lng}}</label>
+                                            <input type = "hidden" id="start_lat" value = {{route.start.location.lat}}>
+                                            <input type = "hidden" id="start_lng" value = {{route.start.location.lng}}>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    {% for point in route.stores %}
+                                        <tr>
+                                            <td>
+                                                <label>Quán ăn {{forloop.counter}}</label>
+                                            </td>
+                                            <td>
+                                                <label>{{point.location.lat}} {{point.location.lng}}</label>
+                                                <input type = "hidden" id="point_{{ forloop.counter0 }}_lat" value = {{point.location.lat}}>
+                                                <input type = "hidden" id="point_{{ forloop.counter0 }}_lng" value = {{point.location.lng}}>
+                                            </td>
+                                            <td>
+                                                <label>{{point.location.address}}</label>
+                                                <input type = "hidden" id="point_{{ forloop.counter0 }}_address" value = "{{point.location.address}}">
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    <tr>
+                                        <td>
+                                            <label>Điểm giao hàng</label>
+                                        </td>
+                                        <td>
+                                            <label>{{route.destination.location.lat}} {{route.destination.location.lng}}</label>
+                                            <input type = "hidden" id="destination_lat" value = {{route.destination.location.lat}}>
+                                            <input type = "hidden" id="destination_lng" value = {{route.destination.location.lng}}>
+                                        </td>
+                                        <td>
+                                            <label>{{route.destination.location.address}}</label>
+                                            <input type = "hidden" id="destination_address" value = "{{route.destination.location.address}}">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <label id="total_length_label">Tổng chiều dài: {{current_order.delivery.total_length}} km</label>
+
+                            <div id = "map" style = "height:80vh; width:80vw; "></div>
+                            {% load static %}
+                            <script src="{% static 'js/order-view-map-2.js' %}"></script>
+                        </form>
+                    {% endif %}
+                </div>
+                <div class = "tab-pane fade in" id = "order_product_tab">
+                    <form method = "POST">
+                        <h3>Giỏ hàng({{current_order.total_quantity}}):</h3>
+                        <table id = "order_product_table" class = "table table-hover" style = "width: auto;">
+                            <thead>
+                                <tr>
+                                    <th>Tên món</th>
+                                    <th>Hình ảnh</th>
+                                    <th>Đơn Giá</th>
+                                    <th>Số lượng</th>
+                                    <th>Tổng</th>
+                                    <th>Trạng thái</th>
+                                    <th>Lần cập nhật gần nhất</th>
+                                    <th>Ghi chú</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order_product in current_order.order_products.all %}
+                                <tr>
+                                    <td><a href = "/product/{{order_product.product.slug}}">{{order_product.product.name}}</a></td>
+                                    <td><img style = "width:100px; height:62px;" src = "{{order_product.product.image.url}}"></td>
+                                    <td>{{order_product.price}}</td>
+                                    <td>{{order_product.quantity}}</td>
+                                    <td>{{order_product.total}}</td>
+                                    <td>{{order_product.status.code}}</td>
+                                    <td>{{order_product.updated}}</td>
+                                    <td>{{order_product.note}}</td>
+                                    <td>
+                                        {% if order_product.status.code == "received" %}
+                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#review_product_modal_{{forloop.counter0}}">Đánh giá</button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>Tổng</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>{{current_order.product_total}}</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+
+                    </form>
+
+                </div>
+
+                <div class = "tab-pane fade in" id = "order_log">
+                    <h3>Nhật ký đơn hàng:</h3>
+                    <table class = "table table-hover" style = "width:auto" id = "log_table">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Nội dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in current_order.logs.all%}
+                            <tr>
+                                <td>{{log.created}}</td>
+                                <td>{{log.log}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <h2>Hành động</h2>
+
+                    {% if current_order.order_status.code == "completed" %}
+                        <div id = "rating_products_modal" class = "modal fade" role="dialog">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title">
+                                            Đánh giá
+                                        </h4>
+                                    </div>
+                                    <div class = "modal-body">
+                                        <h4>Hãy để lại đánh giá của quý khách cho các món ăn dưới đây:</h4>
+                                        <table class = "table table-hover" style = "width: auto;">
+                                            <thead>
+                                            <tr>
+                                                <th>Món ăn</th>
+                                                <th>Hình ảnh</th>
+                                                <th>Số lượng</th>
+                                                <th>Đơn giá</th>
+                                                <th>Tổng</th>
+                                                <th>Hành động</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for order_product in current_order.order_products.all %}
+                                            {% if order_product.status.code == "received" %}
+                                            <tr>
+                                                <td><a href = "/product/{{order_product.product.slug}}">{{order_product.product.name}}</a></td>
+                                                <td><img style = "width:100px; height:62px;" src = "{{order_product.product.image.url}}"></td>
+                                                <td>{{order_product.product.quantity}}</td>
+                                                <td>{{order_product.product.price}}</td>
+                                                <td>{{order_product.product.total}}</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-primary" id = "rating_{{forloop.counter0}}_button">Đánh giá</button>
+                                                    <script>
+                                                        $("#rating_{{forloop.counter0}}_button").click(function(){
+                                                            $('#review_product_modal_{{forloop.counter0}}').modal('show');
+                                                        });
+                                                    </script>
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Bỏ qua</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+<!--                        <script>-->
+<!--                            $(window).on('load', function() {-->
+<!--                               $('#rating_products_modal').modal('show');-->
+<!--                            });-->
+<!--                        </script>-->
+                        {% for order_product in current_order.order_products.all %}
+                        {% if order_product.status.code == "received" %}
+                        <div id = "review_product_modal_{{forloop.counter0}}" class = "modal fade" role="dialog" style="z-index:10000;">
+                            <div class="modal-dialog">
+                                {% if user.is_authenticated %}
+                                    {% if not order_product.product.store == user.store %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">
+                                                Đánh giá món: {{order_product.product.name}}
+                                            </h4>
+                                        </div>
+                                        <form></form>
+                                        <form></form>
+                                        <form method = "POST" enctype="multipart/form-data">
+                                            {% csrf_token %}
+                                                <div class = "modal-body">
+                                                    <input type = "hidden" name = "form_tag" value = "review_product" readonly>
+                                                    <input type = "hidden" name = "product_id" value = "{{order_product.product.id}}" readonly>
+                                                    <div style = "display:flex;justify-content: flex-start;">
+                                                        <img src="{{ user.profile.avatar.url }}" class = "avatar" style = "margin-right:10px;">
+
+                                                        <div style="position: relative;bottom:20px;">
+                                                            <h3>{{user.profile.last_name}} {{user.profile.first_name}}</h3>
+                                                            <h5>{% if order_product.review %}{{order_product.review.updated}}{% else %}{% now "DATETIME_FORMAT"%}{% endif %}</h5>
+                                                            {% if order_product.review %}
+                                                                {% if order_product.review.is_updated%}
+                                                                <h5>Đã chỉnh sửa</h5>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+
+                                                    <hr style="margin:0px; position: relative;bottom:10px;">
+
+
+                                                    <h5>Điểm đánh giá</h5>
+                                                    <input id="rating_{{forloop.counter0}}" type="text" name = "rating" value = "{% if order_product.review %}{{order_product.review.rating}}{% else %}5{% endif %}">
+
+                                                    <hr style = "margin:0px; position: relative;bottom:10px;">
+
+                                                    <h5>Hình ảnh(Không bắt buộc):</h5>
+                                                    <input type="file" id = "rating_image_{{ forloop.counter0 }}_upload" name="image" accept="image/*"/>
+                                                    <img id = "rating_image_{{ forloop.counter0 }}" src = "{% if order_product.review %}{% if order_product.review.image %}{{order_product.review.image.url}}{% endif %}{% else %}#{% endif %}"
+                                                                                                    style = "{% if order_product.review.image %}width:30vw; height:18.54vw;{% endif %}">
+                                                    <h5>Tiêu đề</h5>
+                                                    <input type = "text" name = "title" value = "{% if order_product.review %}{{order_product.review.title}}{% endif %}" maxlength="128">
+
+                                                    <h5>Nội dung đánh giá</h5>
+                                                    <textarea name = "review" style = "width:50vw; height:18.54vw;" maxlength="2048">{% if order_product.review %}{{order_product.review.review}}{% endif %}</textarea>
+
+
+                                                    <script>
+                                                        $("#rating_image_{{ forloop.counter0 }}_upload").change(function() {
+                                                            input = this;
+                                                            if (input.files && input.files[0]) {
+                                                                var reader = new FileReader();
+                                                                reader.onload = function(e) {
+                                                                  $("#rating_image_{{ forloop.counter0 }}").attr('src', e.target.result);
+                                                                  $("#rating_image_{{ forloop.counter0 }}").attr("style", "width:30vw; height:18.54vw;");
+                                                                }
+                                                                reader.readAsDataURL(input.files[0]);
+                                                            }
+                                                        });
+                                                        $("#rating_{{forloop.counter0}}").rating({min:0, max:5, step:0.5,
+                                                                                                 size:'md',starCaptions:(val)=>{return `${val}`},
+                                                                                                 displayOnly:false});
+                                                    </script>
+
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Đánh giá</button>
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                                                </div>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">Yêu cầu đăng nhập</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label>Bạn cần phải đăng nhập để mua hàng</label>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Thoát</button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    {% endif %}
+
+
+            </div>
+
+            {% else %}
+
+            {% endif %}
+
+
+        {% else %}
+          <meta http-equiv="refresh" content="1; url='/login'" />
+          <div>
+              <h3>Bạn chưa đăng nhập, nên bạn sẽ được chuyển hướng sang trang Đăng Nhập</h3>
+          </div>
+        {% endif %}
+    </div>
+{% endblock %}

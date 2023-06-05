@@ -1,0 +1,236 @@
+{% extends 'Site/index.html' %}
+{% block content %}
+    <div class = "container-fluid">
+        {% if user.is_authenticated %}
+            {% if store %}
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="/current-store">Thông tin Cửa hàng</a></li>
+                    <li><a href="/current-store/product-list/1">Danh sách Món ăn</a></li>
+                    <li><a href="/current-store/order-product/1">Các món đang được đặt</a></li>
+                </ul>
+                <br>
+                <ul class="col-md-2 nav nav-pills nav-stacked">
+                    <li class="active"><a data-toggle = "tab" href="#profile">Thông tin</a></li>
+                    <li><a data-toggle = "tab" href="#location">Vị trí</a></li>
+                    <li><a data-toggle = "tab" href="#opening-hours">Giờ hoạt động</a></li>
+                </ul>
+                <div class = "col-md-8 tab-content">
+                    <div class = "tab-pane fade in active" id = "profile">
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <h3>Avatar</h3>
+                            <input type = "hidden" name = "form_tag" value = "avatar" readonly>
+                            <div class = "form-group">
+                                <img class = "store-avatar" src = "{{store.avatar.url}}">
+                            </div>
+                            <div>
+                                <input type="file" name="avatar" accept="image/*" id="id_avatar"}>
+                            </div>
+                            {% if error == "avatar" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                        </form>
+                        <form method = "POST" name="profile">
+                            {% csrf_token %}
+                            <h3>Profile</h3>
+                            <input type = "hidden" name = "form_tag" value = "store" readonly>
+                            <div class = "form-group">
+                                <h4>Trạng thái:</h4>
+                                <label>{{store.status.code}}</label>
+                            </div>
+                            <div class = "form-group">
+                                <h4>Đường dẫn:</h4>
+                                <label>{{store.slug}}</label>
+                            </div>
+                            <div class = "form-group">
+                                <label>Tên<br></label>
+                                <input type="text" name = "name" value = "{{store.name}}" readonly>
+                            </div>
+                            <div class = "form-group">
+                                <label>Mã số kinh doanh<br></label>
+                                <input type="text" name = "business_code" value = "{% if store.business_code %}{{store.business_code}}{% endif %}" readonly>
+                            </div>
+                            <div class = "form-group">
+                                <label>Mã số thuế<br></label>
+                                <input type="text" name = "tax_identification" value = "{% if store.tax_identification %}{{store.tax_identification}}{% endif %}" readonly>
+                            </div>
+                            <div class = "form-group">
+                                <label>Mô tả</label>
+                                <br>
+                                <textarea name = "description" style = "width:500px; height:250px">{{store.description}}</textarea>
+                            </div>
+                            {% if error == "store" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                        </form>
+                    </div>
+                    <div class = "tab-pane fade" id = "location">
+                        <form method = "POST">
+                            {% csrf_token %}
+                            <input type = "hidden" name = "form_tag" value = "location" readonly>
+                            <div>
+                                <h3>Vị trí:<br></h3>
+                                <label>Vĩ độ</label>
+                                <input type = "text" id="lat" name="lat" value = {{store.location.lat}} readonly>
+                            </div>
+                            <div>
+                                <label>Kinh độ</label>
+                                <input type = "text" id="lng" name="lng" value = {{store.location.lng}} readonly>
+                            </div>
+                            <div>
+                                <label>Địa chỉ</label>
+                                <br>
+                                <input type = "text" id="address" name="address" value = "{{store.location.address}}" style="width: 60vw;" readonly>
+                            </div>
+
+                            <div>
+                                <input type = "hidden" id="country" name="country" value = "{{store.location.country}}" readonly>
+                            </div>
+                            <div>
+                                <input type = "hidden" id="region" name="region" value = "{{store.location.region}}" readonly>
+                            </div>
+                            <div>
+                                <input type = "hidden" id="subregion_1" name="subregion_1" value = "{{store.location.subregion_1}}" readonly>
+                            </div>
+                            <div>
+                                <input type = "hidden" id="subregion_2" name="subregion_2" value = "{{store.location.subregion_2}}" readonly>
+                            </div>
+                            <div id = "map" style = "height:80vh; width:80vw; "></div>
+                            {% if error == "location" %}
+                            {% for msg in messages %}
+                                <small style="color:red">{{msg}}</small>
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary" onClick="window.location.reload()">Xác nhận</button>
+                        </form>
+                    </div>
+                    <div class = "tab-pane fade" id = "opening-hours">
+
+
+                        <form method = "POST">
+                            {% csrf_token %}
+                            <input type = "hidden" name = "form_tag" value = "opening_hours" readonly>
+                            <div>
+                                <h4>Thứ hai:<br></h4>
+                                <div style = "display: flex;align-items: center;width:500px;">
+                                    <label style = "margin-right:10px;">Giờ mở cửa</label>
+
+                                    <input style = "margin-right:10px;" type = "time" name = "from_hour_0" value = "{% if opening_hours.0 %}{{ opening_hours.0.from_hour }}{% endif %}" readonly>
+                                    <label style = "margin-right:10px;">Giờ đóng cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "to_hour_0" value = "{% if opening_hours.0 %}{{ opening_hours.0.to_hour }}{% endif %}" readonly>
+                                </div>
+                                <h4>Thứ ba:<br></h4>
+                                <div style = "display: flex;align-items: center;width:500px;">
+                                    <label style = "margin-right:10px;">Giờ mở cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "from_hour_1" value = "{% if opening_hours.1 %}{{ opening_hours.1.from_hour }}{% endif %}" readonly>
+                                    <label style = "margin-right:10px;">Giờ đóng cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "to_hour_1" value = "{% if opening_hours.1 %}{{ opening_hours.1.to_hour }}{% endif %}" readonly>
+                                </div>
+                                <h4>Thứ tư:<br></h4>
+                                <div style = "display: flex;align-items: center;width:500px;">
+                                    <label style = "margin-right:10px;">Giờ mở cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "from_hour_2" value = "{% if opening_hours.2 %}{{ opening_hours.2.from_hour }}{% endif %}" readonly>
+                                    <label style = "margin-right:10px;">Giờ đóng cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "to_hour_2" value = "{% if opening_hours.2 %}{{ opening_hours.2.to_hour }}{% endif %}" readonly>
+                                </div>
+                                <h4>Thứ năm:<br></h4>
+                                <div style = "display: flex;align-items: center;width:500px;">
+                                    <label style = "margin-right:10px;">Giờ mở cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "from_hour_3" value = "{% if opening_hours.3 %}{{ opening_hours.3.from_hour }}{% endif %}" readonly>
+                                    <label style = "margin-right:10px;">Giờ đóng cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "to_hour_3" value = "{% if opening_hours.3 %}{{ opening_hours.3.to_hour }}{% endif %}" readonly>
+                                </div>
+                                <h4>Thứ sáu:<br></h4>
+                                <div style = "display: flex;align-items: center;width:500px;">
+                                    <label style = "margin-right:10px;">Giờ mở cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "from_hour_4" value = "{% if opening_hours.4 %}{{ opening_hours.4.from_hour }}{% endif %}" readonly>
+                                    <label style = "margin-right:10px;">Giờ đóng cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "to_hour_4" value = "{% if opening_hours.4 %}{{ opening_hours.4.to_hour }}{% endif %}" readonly>
+                                </div>
+                                <h4>Thứ bảy:<br></h4>
+                                <div style = "display: flex;align-items: center;width:500px;">
+                                    <label style = "margin-right:10px;">Giờ mở cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "from_hour_5" value = "{% if opening_hours.5 %}{{ opening_hours.5.from_hour }}{% endif %}" readonly>
+                                    <label style = "margin-right:10px;">Giờ đóng cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "to_hour_5" value = "{% if opening_hours.5 %}{{ opening_hours.5.to_hour }}{% endif %}">
+                                </div>
+                                <h4>Chủ nhật:<br></h4>
+                                <div style = "display: flex;align-items: center;width:500px;">
+                                    <label style = "margin-right:10px;">Giờ mở cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "from_hour_6" value = "{% if opening_hours.6 %}{{ opening_hours.6.from_hour }}{% endif %}" readonly>
+                                    <label style = "margin-right:10px;">Giờ đóng cửa</label>
+                                    <input style = "margin-right:10px;" type = "time" name = "to_hour_6" value = "{% if opening_hours.6 %}{{ opening_hours.6.to_hour }}{% endif %}" readonly>
+                                </div>
+                                {% if error == "opening_hours" %}
+                                {% for msg in messages %}
+                                    <small style="color:red">{{msg}}</small>
+                                    <br>
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                    <div>
+                        <h3>Hành động</h3>
+                    </div>
+                </div>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+                <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+                <script src="https://unpkg.com/leaflet-ant-path" type="text/javascript"></script>
+                <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.0/leaflet.textpath.min.js"></script>
+
+                <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
+                <script src="https://unpkg.com/esri-leaflet-vector@4.0.1/dist/esri-leaflet-vector.js"></script>
+
+                <script src="https://unpkg.com/esri-leaflet-geocoder@3.1.4/dist/esri-leaflet-geocoder.js"></script>
+
+                <script src="https://unpkg.com/@esri/arcgis-rest-request@4.0.0/dist/bundled/request.umd.js"></script>
+                <script src="https://unpkg.com/@esri/arcgis-rest-routing@4.0.0/dist/bundled/routing.umd.js"></script>
+                {% load static %}
+                <script src="{% static 'js/location.js' %}"></script>
+
+            {% else %}
+                <div class = "col-md-6 p-4 text-center form-default">
+                    <form method = "POST">
+                        {% csrf_token %}
+                        <input type = "hidden" name = "form_tag" value = "register" readonly>
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <label>Đăng ký cửa hàng</label>
+                            </div>
+                            <div class = "modal-body text-left">
+                                <h4>Bạn có chắc chắn muốn đăng ký cửa hàng và hoạt động với vai trò Chủ Cửa Hàng?</h4>
+                                <h4>Lưu ý:</h4>
+                                <h5>- Bạn chỉ có thể đăng ký và hoạt động ở 1 trong 2 vai trò: Chủ cửa hàng hoặc Người giao hàng.</h5>
+                                <h5>- Khi nhấn nút Đăng ký, bạn cần phải điền đầy đủ thông tin để Quản trị viên xét duyệt Cửa hàng của bạn.</h5>
+                                <h5>- Việc đăng ký hoạt động với vai trò Chủ Cửa Hàng sẽ không xóa vai trò Khách Hàng của bạn </h5>
+                                <h5>(Bạn có thể xóa vai trò Khách Hàng ở 1 trang khác nếu bạn là Chủ cửa hàng hoặc Người giao hàng)</h5>
+
+                                <button type="submit" class="btn btn-default">Xác nhận</button>
+                                <a href ="/">
+                                    <button type = "button" class = "btn btn-default">Hủy</button>
+                                </a>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            {% endif %}
+
+        {% else %}
+            <meta http-equiv="refresh" content="1; url='/login'" />
+            <div>
+                <h3>You are not logged in now, so you will be directed to Login Page</h3>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

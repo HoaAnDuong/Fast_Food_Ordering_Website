@@ -1,0 +1,46 @@
+{% extends 'Site/index.html' %}
+
+{% block content %}
+
+    <div class = "container-fluid">
+        <ul class="pagination" style = "display:flex;">
+            {% for i in page_range %}
+            <li {% if page.number == i %}class="active"{% endif %}><a href = "/store-list{% if search_keyword %}/search-keyword/{{search_keyword}}{% endif %}/{{i}}">{{i}}</a></li>
+            {% endfor %}
+        </ul>
+        <hr>
+        {% if search_keyword %}
+        <h4>Kết quả tìm kiếm cho {{search_keyword}} ({{search_count}} kết quả)</h4>
+        {% endif %}
+        <div class = "row">
+
+            <div class = "col-md-12">
+                <div class = "row">
+                {% for p in page.object_list %}
+
+
+                    <div class = "col-md-2 product-card" style="margin:20px;">
+                        <div style = "border-style:solid; border-width: thin; width: 202px;">
+                            <img class = 'product-image' src="{{ p.avatar.url }}">
+                        </div>
+                        <div style = "border-style:solid; border-width: thin; width: 202px;">
+                            <a href = "/store/{{ p.slug }}"><h4 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{ p.name }}</h4></a>
+                        </div>
+                        <div style = "border-style:solid; border-width: thin; width: 202px;">
+                            <h5 style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{p.location.address}}</h5>
+                            {% if p.distance %}
+                                <h5>{{ p.distance }}km</h5>
+                            {% endif %}
+                            {% if p.is_open %}
+                                <h5 style="color:green">Mở cửa</h5>
+                            {% endif %}
+                        </div>
+                    </div>
+
+
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
