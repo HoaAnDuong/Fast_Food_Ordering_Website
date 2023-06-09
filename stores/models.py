@@ -90,6 +90,8 @@ class Store(models.Model):
 	def create_product(self,request,status,category):
 		name = request.POST.get("name")
 		price = float(request.POST.get("price"))
+		if price <= 0:
+			raise ValidationError("Giá của món không thể nhỏ hơn 0")
 		description = request.POST.get("description")
 		image = request.FILES.get("image")
 		slug = f"{name.replace(' ','-')}-{self.slug}"

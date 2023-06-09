@@ -5,6 +5,7 @@ urlpatterns = [
     path('store-list/<int:page_id>',StoreListView),
     path('store/<slug:slug>',StoreDetailView),
     path('current-store/',StoreView),
+    path('current-store/get-statistic',GetStoreData),
     path('current-store/product-list/<int:page_id>',StoreProductView),
     path('current-store/order-product/<int:page_id>',OrderProductView),
     path('current-store/latest-order-product',GetLatestOrderProduct),

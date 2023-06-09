@@ -199,7 +199,7 @@ class Order(models.Model):
         if product.status.code != "active":
             raise ValidationError("Món ăn không sẵn sàng để được đặt")
 
-        if quantity < 0: raise ValueError("Số lượng không thể nhỏ hơn 0")
+        if quantity <= 0: raise ValueError("Số lượng không thể nhỏ hơn hoặc bằng 0")
 
         if self.total_quantity + quantity <= MAX_ORDER_PRODUCTS_COUNT:
             self.order_products.create(order = self,product=product,price = product.price,quantity=quantity,

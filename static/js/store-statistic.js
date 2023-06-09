@@ -204,7 +204,7 @@ function createGraph(){
                 order:1,
                 yAxisID: 'y',
               },{
-                label: 'Số lượng(Đang được đặt)',
+                label: 'Số lượng đơn(Đang được đặt)',
                 data: [],
                 borderColor:
                   '#f0f564',
@@ -215,7 +215,7 @@ function createGraph(){
                 yAxisID: 'y2',
               },
               {
-                label: 'Số lượng(Đã nhận hàng)',
+                label: 'Số lượng đơn(Đã nhận hàng)',
                 data: [],
                 borderColor:
                   '#1cb305',
@@ -226,7 +226,7 @@ function createGraph(){
                 yAxisID: 'y2',
               },
               {
-                label: 'Số lượng(Bị hủy)',
+                label: 'Số lượng đơn(Bị hủy)',
                 data: [],
                 borderColor:
                   '#de0909',
@@ -441,9 +441,7 @@ function createGraph(){
 
     }
     var data2 = {
-      labels: ['Đang được đặt(Sản phẩm này)', 'Đang được đặt(Còn lại)',
-      'Đã được đặt(Sản phẩm này)', 'Đã được đặt(Còn lại)',
-      'Bị hủy(Sản phẩm này)', 'Bị hủy(Còn lại)'],
+      labels: ['Đang được đặt', 'Đã được đặt','Bị hủy'],
       datasets: [
         {
           label: 'Doanh thu(VND)',
@@ -451,22 +449,16 @@ function createGraph(){
           borderColor: [
             "rgba(255, 215, 0, 1)",
             "rgba(255, 215, 0, 1)",
-            "rgba(255, 215, 0, 1)",
-            "rgba(255, 215, 0, 1)",
-            "rgba(255, 215, 0, 1)",
             "rgba(255, 215, 0, 1)"
            ],
           backgroundColor: [
             "rgba(240, 245, 100,1)",
-            "rgba(240, 245, 100,0.5)",
             "rgba(28, 179, 5, 1)",
-            "rgba(28, 179, 5, 0.5)",
-            "rgba(222, 9, 9, 1)",
-            "rgba(222, 9, 9, 0.5)"
+            "rgba(222, 9, 9, 1)"
            ],
         },
         {
-        weight:0.05
+            weight: 0.05
         },
         {
           label: 'Số lượng đơn',
@@ -475,16 +467,10 @@ function createGraph(){
           "rgba(255,255,255, 1)",
           "rgba(255,255,255, 1)",
           "rgba(255,255,255, 1)",
-          "rgba(255,255,255, 1)",
-          "rgba(255,255,255, 1)",
-          "rgba(255,255,255, 1)",
           ],
           backgroundColor: [
-          "rgba(240, 245, 100,0.5)",
           "rgba(240, 245, 100,1)",
-          "rgba(28, 179, 5, 0.5)",
           "rgba(28, 179, 5, 1)",
-          "rgba(222, 9, 9, 0.5)",
           "rgba(222, 9, 9, 1)"
           ],
         }
@@ -508,7 +494,7 @@ function createGraph(){
           },
         subtitle: {
             display: true,
-            text: "Theo doanh thu và số lượng đơn",
+            text: "Theo doanh thu và số lượng đơn hàng",
             font:{
                 size:20
             }
@@ -557,7 +543,7 @@ function updateGraph(){
 function getStatisticData(){
     $.ajax({
         type:'POST',
-        url:`/current-store/product/${$("#slug").val()}/get-statistic`,
+        url:`/current-store/get-statistic`,
         data:
         {
             csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
@@ -580,26 +566,20 @@ function getStatisticData(){
                 order_product_chart.data.datasets[0].data.push(element.submitted.total);
                 order_product_chart.data.datasets[1].data.push(element.completed.total);
                 order_product_chart.data.datasets[2].data.push(-element.cancelled.total);
-                order_product_chart.data.datasets[3].data.push(element.submitted.quantity);
-                order_product_chart.data.datasets[4].data.push(element.completed.quantity);
-                order_product_chart.data.datasets[5].data.push(-element.cancelled.quantity);
+                order_product_chart.data.datasets[3].data.push(element.submitted.order_count);
+                order_product_chart.data.datasets[4].data.push(element.completed.order_count);
+                order_product_chart.data.datasets[5].data.push(-element.cancelled.order_count);
             });
 
             order_product_pie_chart.data.datasets[0].data = [
                 json.statistic.submitted.total,
-                json.statistic.submitted.store_total-json.statistic.submitted.total,
                 json.statistic.completed.total,
-                json.statistic.completed.store_total-json.statistic.completed.total,
                 json.statistic.cancelled.total,
-                json.statistic.cancelled.store_total-json.statistic.cancelled.total,
             ]
             order_product_pie_chart.data.datasets[2].data = [
                 json.statistic.submitted.order_count,
-                json.statistic.submitted.store_order_count-json.statistic.submitted.order_count,
                 json.statistic.completed.order_count,
-                json.statistic.completed.store_order_count-json.statistic.completed.order_count,
                 json.statistic.cancelled.order_count,
-                json.statistic.cancelled.store_order_count-json.statistic.cancelled.order_count,
             ]
 
             console.log(order_product_chart.data.datasets)
